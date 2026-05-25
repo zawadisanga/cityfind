@@ -548,39 +548,91 @@ app.get('/api/ratings/company/:companyId', async (req, res) => {
 });
 
 // ============ AI BOT ROUTE - SIMPLE VERSION ============
+// ============ AI BOT ROUTE - WITH GEMINI API ============
+const GOOGLE_AI_API_KEY = process.env.GOOGLE_AI_API_KEY;
+
 app.post('/api/bot/chat', async (req, res) => {
     try {
         const { message, language } = req.body;
         
-        const lowerMsg = (message || '').toLowerCase();
-        let reply = '';
+        console.log('🤖 User asked:', message);
         
-        if (lowerMsg.includes('bei') || lowerMsg.includes('price') || lowerMsg.includes('gharama')) {
-            reply = "💰 **Bei za Matangazo:**\n• Banner: $100 kwa mwezi\n• Featured: $500 kwa mwezi\n• Sponsored: $1,000 kwa mwezi\n\nKwa maelezo zaidi, WhatsApp: +255796323348";
-        }
-        else if (lowerMsg.includes('lipa') || lowerMsg.includes('payment') || lowerMsg.includes('malipo') || lowerMsg.includes('bank')) {
-            reply = "🏦 **Maelezo ya Malipo:**\n\nBenki: NMB Bank\nJina la Akaunti: City Tech Holdings\nNamba ya Akaunti: 5161480052318274\nSWIFT: NMBCTZTZ\n\nBaada ya malipo, tuna proof yako kwa WhatsApp: +255796323348";
-        }
-        else if (lowerMsg.includes('refund') || lowerMsg.includes('rejesha') || lowerMsg.includes('reimburse')) {
-            reply = "💰 **Kuhusu Refund (Kurejeshewa Pesa):**\n\nPesa yako itarejeshwa na **City Tech Holdings** kupitia NMB Bank (Akaunti: 5161480052318274).\n\n📌 **Mchakato wa Refund:**\n1. Ukifanya quality check na bidhaa hailingani\n2. Tunachakata ombi lako ndani ya saa 24\n3. Pesa inarejeshwa kwenye M-Pesa au Akaunti yako ya Benki\n4. Muda wa kurejesha: Siku 1-3\n\nKwa msaada zaidi, WhatsApp: +255796323348";
-        }
-        else if (lowerMsg.includes('simu') || lowerMsg.includes('phone') || lowerMsg.includes('contact')) {
-            reply = "📞 **Mawasiliano Yetu:**\n\nWhatsApp/Simu: +255796323348\nBarua Pepe: citytechuk@gmail.com\n\nTunapatikana 24/7!";
-        }
-        else if (lowerMsg.includes('track') || lowerMsg.includes('fuatilia')) {
-            reply = "📦 **Kufuatilia Order Yako:**\nNenda kwenye sehemu ya 'Track' na ingiza namba yako ya order (inaanza na ORD).";
-        }
-        else if (lowerMsg.includes('quality') || lowerMsg.includes('ubora')) {
-            reply = "✅ **Quality Check Process:**\n1. Pokea bidhaa\n2. Rekodi video fupi\n3. Piga picha\n4. Pakia kwenye website\n5. Kama bidhaa hailingani, utarejeshewa pesa ndani ya siku 3";
-        }
-        else {
-            reply = "👋 Hello! I'm City Find AI Assistant.\n\nI can help you with:\n• 💰 Bei za Matangazo\n• 📦 Kufuatilia delivery\n• 💳 Malipo (NMB Bank)\n• ✅ Quality checks\n• 🔄 Refund (Kurejeshewa pesa)\n\n📞 WhatsApp: +255796323348\n📧 Email: citytechuk@gmail.com\n\nNiulize swali lolote!";
+        // Call Google Gemini API
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GOOGLE_AI_API_KEY}`;
+        
+        const response = await axios.post(
+            apiUrl,
+            {
+                contents: [{
+                    parts: [{
+                        text: `You are City Find AI Assistant - a helpful business assistant for a Tanzanian company.
+
+COMPANY INFO:
+- Name: City Find (by City Tech Holdings)
+- WhatsApp/Phone: +255796323348
+- Email: citytechuk@gmail.com
+- Bank: NMB Bank Tanzania
+- Account Name: City Tech Holdings  
+- Account Number: 5161480052318274
+- SWIFT: NMBCTZTZ
+
+SERVICES & PRICING:
+- Banner Ads: $100 per month
+- Featured Ads: $500 per month
+- Sponsored Ads: $1,000 per month
+- Delivery Tracking: Free
+- Quality Check: Free (with video verification)
+
+PAYMENT METHODS:
+- Direct Bank Transfer (NMB Bank)
+- Mobile Money (M-Pesa, Tigo Pesa, Airtel Money)
+- Cash on Delivery
+
+User question: ${message}
+
+IMPORTANT RULES:
+1. Answer in ${language === 'sw' ? 'Swahili (Kiswahili)' : 'English'}
+2. Be friendly, helpful, and professional
+3. If asked "unaitwa nani" say "Naitwa City Find AI Assistant"
+4. If asked "how are you" say you're doing great and ask how you can help
+5. If asked to create HTML or code, you can help create simple examples
+6. Keep answers concise but helpful`
+
+                    }]
+                }]
+            },
+            { timeout: 20000 }
+        );
+        
+        if (response.data && response.data.candidates && response.data.candidates[0]) {
+            const botReply = response.data.candidates[0].content.parts[0].text;
+            console.log('✅ Gemini API responded successfully');
+            return res.json({ reply: botReply });
         }
         
-        res.json({ reply: reply });
+        throw new Error('No response from Gemini');
+        
     } catch (error) {
-        console.error('Bot Error:', error.message);
-        res.json({ reply: "Tafadhali wasiliana nasi kwenye WhatsApp: +255796323348 kwa msaada." });
+        console.error('❌ Gemini API Error:', error.message);
+        if (error.response) {
+            console.error('API Response:', error.response.data);
+        }
+        
+        // Fallback response if Gemini fails
+        const lowerMsg = (message || '').toLowerCase();
+        let fallbackReply = "";
+        
+        if (lowerMsg.includes('bei') || lowerMsg.includes('price')) {
+            fallbackReply = "💰 **Bei za Matangazo:** Banner: $100, Featured: $500, Sponsored: $1,000 kwa mwezi";
+        } else if (lowerMsg.includes('unaitwa nani') || lowerMsg.includes('who are you')) {
+            fallbackReply = "Naitwa **City Find AI Assistant**! Ninakusaidia kuhusu matangazo, malipo, na kufuatilia delivery zako. 😊";
+        } else if (lowerMsg.includes('how are you')) {
+            fallbackReply = "I'm doing great! Thanks for asking! 😊 How can I help you with your business today?";
+        } else {
+            fallbackReply = "👋 Hello! I'm City Find AI Assistant.\n\n📞 WhatsApp: +255796323348\n📧 Email: citytechuk@gmail.com\n🏦 NMB Bank: 5161480052318274\n\nNiulize swali lolote!";
+        }
+        
+        res.json({ reply: fallbackReply });
     }
 });
 
