@@ -666,11 +666,35 @@ app.get('/api/receiver/stats', authMiddleware, async (req, res) => {
     }
 });
 
-// ============ AI BOT ROUTE ============
-
-git commit -m "Fix AI Bot with Gemini 1.5 Flash"
-git push heroku main
-heroku restart --app cityfind
+// ============ AI BOT ROUTE - CLEAN VERSION ============
+app.post('/api/bot/chat', async (req, res) => {
+    try {
+        const { message, language } = req.body;
+        
+        const lowerMsg = (message || '').toLowerCase();
+        let reply = '';
+        
+        if (lowerMsg.includes('bei') || lowerMsg.includes('price') || lowerMsg.includes('gharama')) {
+            reply = "💰 **Bei za Matangazo:**\n• Banner: $100 kwa mwezi\n• Featured: $500 kwa mwezi\n• Sponsored: $1,000 kwa mwezi\n\nKwa maelezo zaidi, WhatsApp: +255796323348";
+        }
+        else if (lowerMsg.includes('payment') || lowerMsg.includes('malipo') || lowerMsg.includes('bank')) {
+            reply = "🏦 **Maelezo ya Malipo:**\nBenki: NMB Bank\nJina: City Tech Holdings\nNamba: 5161480052318274\nSWIFT: NMBCTZTZ";
+        }
+        else if (lowerMsg.includes('contact') || lowerMsg.includes('wasiliana') || lowerMsg.includes('simu')) {
+            reply = "📞 **Mawasiliano:**\nWhatsApp: +255796323348\nEmail: citytechuk@gmail.com";
+        }
+        else if (lowerMsg.includes('track') || lowerMsg.includes('fuatilia')) {
+            reply = "📦 **Kufuatilia Order:**\nNenda kwenye sehemu ya 'Track' kwenye website yetu na ingiza namba yako ya order.";
+        }
+        else {
+            reply = "👋 Hello! I'm City Find AI Assistant.\n\nI can help you with:\n• 💰 Advertising prices\n• 📦 Tracking deliveries\n• 💳 Payments (NMB Bank)\n• ✅ Quality checks\n\n📞 WhatsApp: +255796323348\n📧 Email: citytechuk@gmail.com\n\nWhat would you like to know?";
+        }
+        
+        res.json({ reply: reply });
+    } catch (error) {
+        res.json({ reply: "Please contact us on WhatsApp: +255796323348 for assistance." });
+    }
+});
 // ============ SERVE HTML FILES ============
 app.get('/dashboard-admin.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'dashboard-admin.html'));
