@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>City Find | Global Business Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.socket.io/4.6.2/socket.io.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            background: radial-gradient(ellipse at 30% 40%, #050510, #000000);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+        
+        /* Galaxy Animations */
+        @keyframes spiralPulse {
+            0%, 100% { transform: rotate(0deg) scale(1); opacity: 0.8; }
+            50% { transform: rotate(3deg) scale(1.02); opacity: 1; }
+        }
+        
+        @keyframes explodePulse {
+            0%, 100% { filter: brightness(1) blur(0px); }
+            50% { filter: brightness(1.3) blur(1px); }
+        }
+        
+        @keyframes nebulaFloat {
+            0%, 100% { transform: translateY(0px) scale(1); }
+            50% { transform: translateY(-5px) scale(1.01); }
+        }
+        
+        @keyframes blackholePulse {
+            0%, 100% { filter: drop-shadow(0 0 15px #9b51e0); }
+            50% { filter: drop-shadow(0 0 35px #00f2fe); }
+        }
+        
+        @keyframes starTwinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+        
+        .galaxy-spiral { animation: spiralPulse 8s ease-in-out infinite; }
+        .galaxy-explode { animation: explodePulse 6s ease-in-out infinite; }
+        .galaxy-nebula { animation: nebulaFloat 10s ease-in-out infinite; }
+        .galaxy-blackhole { animation: blackholePulse 7s ease-in-out infinite; }
+        
+        .ad-card {
+            transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            backdrop-filter: blur(12px);
+            background: rgba(15, 25, 45, 0.6);
+            border: 1px solid rgba(0, 242, 254, 0.2);
+        }
+        
+        .ad-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 242, 254, 0.25);
+            border-color: rgba(0, 242, 254, 0.6);
+        }
+        
+        /* Language Selector */
+        .lang-selector {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 40px;
+            padding: 8px 16px;
+            border: 1px solid #00f2fe;
+        }
+        
+        .lang-selector select {
+            background: transparent;
+            color: white;
+            border: none;
+            outline: none;
+            cursor: pointer;
+        }
+        
+        /* Chat Bot */
+        .chat-bot {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            width: 380px;
+            height: 550px;
+            background: rgba(10, 15, 42, 0.98);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            border: 1px solid #00f2fe;
+            display: none;
+            flex-direction: column;
+            z-index: 1000;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+        
+        .chat-bot.open { display: flex; }
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+        
+        .message-bot {
+            background: linear-gradient(135deg, #1a0a3e, #0a0f2a);
+            color: white;
+            border-radius: 18px;
+            border-top-left-radius: 4px;
+            padding: 10px 14px;
+            margin: 8px 0;
+            max-width: 85%;
+        }
+        
+        .message-user {
+            background: linear-gradient(135deg, #00f2fe, #9b51e0);
+            color: white;
+            border-radius: 18px;
+            border-top-right-radius: 4px;
+            padding: 10px 14px;
+            margin: 8px 0 8px auto;
+            max-width: 85%;
+        }
+        
+        /* Stars background */
+        .star {
+            position: fixed;
+            background: white;
+            border-radius: 50%;
+            animation: starTwinkle 3s ease-in-out infinite;
+            z-index: -1;
+        }
+        
+        /* Loading animation */
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(0, 242, 254, 0.3);
+            border-top-color: #00f2fe;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Category buttons */
+        .category-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(0,242,254,0.3);
+            transition: all 0.2s;
+        }
+        
+        .category-btn:hover, .category-btn.active {
+            background: rgba(0,242,254,0.2);
+            border-color: #00f2fe;
+        }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #00f2fe; border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+    <!-- Language Selector -->
+    <div class="lang-selector">
+        <i class="fas fa-globe text-cyan-400 mr-2"></i>
+        <select id="languageSelect">
+            <option value="en">🌍 English</option>
+            <option value="sw">🇹🇿 Kiswahili</option>
+            <option value="fr">🇫🇷 Français</option>
+            <option value="es">🇪🇸 Español</option>
+            <option value="ar">🇸🇦 العربية</option>
+            <option value="zh">🇨🇳 中文</option>
+            <option value="hi">🇮🇳 हिंदी</option>
+            <option value="pt">🇵🇹 Português</option>
+            <option value="ru">🇷🇺 Русский</option>
+            <option value="de">🇩🇪 Deutsch</option>
+            <option value="ja">🇯🇵 日本語</option>
+            <option value="ko">🇰🇷 한국어</option>
+            <option value="it">🇮🇹 Italiano</option>
+            <option value="tr">🇹🇷 Türkçe</option>
+        </select>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="bg-black/30 backdrop-blur-md border-b border-cyan-500/30 sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center flex-wrap gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-full flex items-center justify-center">
+                    <i class="fas fa-city text-white"></i>
+                </div>
+                <span class="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">City Find</span>
+            </div>
+            
+            <div class="flex gap-3 flex-wrap">
+                <button onclick="showSection('ads')" class="px-4 py-2 rounded-full bg-cyan-500/20 hover:bg-cyan-500/40 transition" id="navAds">
+                    <i class="fas fa-ad mr-2"></i> <span data-key="nav_ads">Ads</span>
+                </button>
+                <button onclick="showSection('tracking')" class="px-4 py-2 rounded-full hover:bg-cyan-500/20 transition" id="navTracking">
+                    <i class="fas fa-map-marker-alt mr-2"></i> <span data-key="nav_tracking">Track</span>
+                </button>
+                <button onclick="showSection('orders')" class="px-4 py-2 rounded-full hover:bg-cyan-500/20 transition" id="navOrders">
+                    <i class="fas fa-truck mr-2"></i> <span data-key="nav_orders">Orders</span>
+                </button>
+                <button onclick="showSection('dashboard')" class="px-4 py-2 rounded-full hover:bg-cyan-500/20 transition" id="navDashboard">
+                    <i class="fas fa-chart-line mr-2"></i> <span data-key="nav_dashboard">Dashboard</span>
+                </button>
+            </div>
+            
+            <div class="flex gap-2">
+                <div id="authButtons" class="flex gap-2">
+                    <button onclick="showAuthModal('login')" class="px-4 py-2 border border-cyan-500 rounded-full hover:bg-cyan-500/20 transition">
+                        <i class="fas fa-sign-in-alt mr-2"></i> <span data-key="login">Login</span>
+                    </button>
+                    <button onclick="showAuthModal('register')" class="px-4 py-2 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-full hover:opacity-90 transition">
+                        <i class="fas fa-user-plus mr-2"></i> <span data-key="register">Register</span>
+                    </button>
+                </div>
+                <div id="userInfo" class="hidden items-center gap-3">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center">
+                            <i class="fas fa-user text-white text-sm"></i>
+                        </div>
+                        <span id="userName" class="font-medium"></span>
+                        <span id="userRole" class="text-xs px-2 py-1 bg-cyan-500/30 rounded-full"></span>
+                    </div>
+                    <button onclick="logout()" class="px-3 py-1 bg-red-500/30 rounded-full hover:bg-red-500/50 text-sm">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-4 py-8">
+        <!-- Hero Section -->
+        <div class="text-center py-12">
+            <h1 class="text-4xl md:text-6xl font-bold bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                Global Business Platform
+            </h1>
+            <p class="text-gray-300 text-lg mt-4 max-w-2xl mx-auto">
+                Advertise your business, track deliveries, verify quality, and get paid securely
+            </p>
+            <div class="flex justify-center gap-4 mt-8 flex-wrap">
+                <button onclick="showAuthModal('register')" class="px-8 py-3 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-full font-semibold hover:scale-105 transition">
+                    <i class="fas fa-rocket mr-2"></i> Start Advertising
+                </button>
+                <button onclick="document.getElementById('trackOrder').scrollIntoView({behavior:'smooth'})" class="px-8 py-3 border border-cyan-500 rounded-full font-semibold hover:bg-cyan-500/20 transition">
+                    <i class="fas fa-search mr-2"></i> Track Order
+                </button>
+            </div>
+        </div>
+
+        <!-- Categories -->
+        <div class="flex flex-wrap justify-center gap-3 mb-8">
+            <button onclick="filterAds('all')" class="category-btn px-4 py-2 rounded-full active" data-cat="all">All</button>
+            <button onclick="filterAds('cars')" class="category-btn px-4 py-2 rounded-full" data-cat="cars">🚗 Cars</button>
+            <button onclick="filterAds('electronics')" class="category-btn px-4 py-2 rounded-full" data-cat="electronics">📱 Electronics</button>
+            <button onclick="filterAds('fashion')" class="category-btn px-4 py-2 rounded-full" data-cat="fashion">👕 Fashion</button>
+            <button onclick="filterAds('realestate')" class="category-btn px-4 py-2 rounded-full" data-cat="realestate">🏠 Real Estate</button>
+            <button onclick="filterAds('services')" class="category-btn px-4 py-2 rounded-full" data-cat="services">⚙️ Services</button>
+            <button onclick="filterAds('food')" class="category-btn px-4 py-2 rounded-full" data-cat="food">🍔 Food</button>
+            <button onclick="filterAds('tech')" class="category-btn px-4 py-2 rounded-full" data-cat="tech">💻 Technology</button>
+        </div>
+
+        <!-- Ads Section -->
+        <div id="adsSection" class="block">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold"><i class="fas fa-ad text-cyan-400 mr-2"></i> Featured Ads</h2>
+                <div class="relative">
+                    <input type="text" id="searchAds" placeholder="Search ads..." class="bg-white/10 border border-white/20 rounded-full px-4 py-2 pl-10 w-64 focus:outline-none focus:border-cyan-400">
+                    <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                </div>
+            </div>
+            <div id="adsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="col-span-full text-center py-12">
+                    <div class="loading-spinner mx-auto"></div>
+                    <p class="mt-4 text-gray-400">Loading amazing ads...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tracking Section -->
+        <div id="trackingSection" class="hidden">
+            <div class="max-w-2xl mx-auto">
+                <div class="bg-white/5 rounded-2xl p-8 border border-cyan-500/20">
+                    <h2 class="text-2xl font-bold mb-6 text-center"><i class="fas fa-map-marker-alt text-cyan-400 mr-2"></i> Track Your Order</h2>
+                    <div class="flex gap-3">
+                        <input type="text" id="trackOrderNumber" placeholder="Enter Order Number (e.g., ORD1234567890)" class="flex-1 bg-white/10 border border-white/20 rounded-full px-4 py-3 focus:outline-none focus:border-cyan-400">
+                        <button onclick="trackOrder()" class="px-6 py-3 bg-cyan-500 rounded-full font-semibold hover:bg-cyan-600 transition">
+                            <i class="fas fa-search"></i> Track
+                        </button>
+                    </div>
+                    <div id="trackResult" class="mt-6 hidden">
+                        <!-- Tracking results will appear here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Orders Section -->
+        <div id="ordersSection" class="hidden">
+            <h2 class="text-2xl font-bold mb-6"><i class="fas fa-truck text-cyan-400 mr-2"></i> My Orders</h2>
+            <div id="ordersList" class="space-y-4">
+                <div class="text-center py-12 text-gray-400">
+                    <i class="fas fa-box-open text-4xl mb-3 block"></i>
+                    <p>Login to view your orders</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Section -->
+        <div id="dashboardSection" class="hidden">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-gradient-to-br from-cyan-500/20 to-transparent rounded-2xl p-6 border border-cyan-500/30">
+                    <i class="fas fa-chart-line text-3xl text-cyan-400 mb-3"></i>
+                    <div class="text-2xl font-bold" id="statAds">0</div>
+                    <div class="text-gray-400">Active Ads</div>
+                </div>
+                <div class="bg-gradient-to-br from-purple-500/20 to-transparent rounded-2xl p-6 border border-purple-500/30">
+                    <i class="fas fa-shopping-cart text-3xl text-purple-400 mb-3"></i>
+                    <div class="text-2xl font-bold" id="statOrders">0</div>
+                    <div class="text-gray-400">Total Orders</div>
+                </div>
+                <div class="bg-gradient-to-br from-green-500/20 to-transparent rounded-2xl p-6 border border-green-500/30">
+                    <i class="fas fa-dollar-sign text-3xl text-green-400 mb-3"></i>
+                    <div class="text-2xl font-bold" id="statRevenue">$0</div>
+                    <div class="text-gray-400">Revenue</div>
+                </div>
+            </div>
+            
+            <div class="bg-white/5 rounded-2xl p-6 border border-cyan-500/20">
+                <h3 class="text-xl font-bold mb-4"><i class="fas fa-plus-circle text-cyan-400 mr-2"></i> Create New Ad</h3>
+                <form id="createAdForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input type="text" id="adTitle" placeholder="Ad Title" class="bg-white/10 border border-white/20 rounded-lg px-4 py-2 focus:outline-none focus:border-cyan-400" required>
+                    <textarea id="adDescription" placeholder="Description" rows="3" class="bg-white/10 border border-white/20 rounded-lg px-4 py-2 focus:outline-none focus:border-cyan-400 md:col-span-2" required></textarea>
+                    <select id="adCategory" class="bg-white/10 border border-white/20 rounded-lg px-4 py-2 focus:outline-none focus:border-cyan-400">
+                        <option value="cars">🚗 Cars</option>
+                        <option value="electronics">📱 Electronics</option>
+                        <option value="fashion">👕 Fashion</option>
+                        <option value="realestate">🏠 Real Estate</option>
+                        <option value="services">⚙️ Services</option>
+                        <option value="food">🍔 Food</option>
+                        <option value="tech">💻 Technology</option>
+                    </select>
+                    <select id="adType" class="bg-white/10 border border-white/20 rounded-lg px-4 py-2 focus:outline-none focus:border-cyan-400">
+                        <option value="banner">Banner ($100/month)</option>
+                        <option value="featured">Featured ($500/month)</option>
+                        <option value="sponsored">Sponsored ($1000/month)</option>
+                    </select>
+                    <input type="number" id="adPrice" placeholder="Price (USD)" class="bg-white/10 border border-white/20 rounded-lg px-4 py-2 focus:outline-none focus:border-cyan-400">
+                    <input type="file" id="adMedia" accept="image/*,video/*" multiple class="bg-white/10 border border-white/20 rounded-lg px-4 py-2 focus:outline-none focus:border-cyan-400 md:col-span-2">
+                    <button type="submit" class="bg-gradient-to-r from-cyan-500 to-purple-600 rounded-full py-3 font-semibold hover:scale-105 transition md:col-span-2">
+                        <i class="fas fa-cloud-upload-alt mr-2"></i> Publish Ad
+                    </button>
+                </form>
+            </div>
+            
+            <div class="bg-white/5 rounded-2xl p-6 border border-cyan-500/20 mt-6">
+                <h3 class="text-xl font-bold mb-4"><i class="fas fa-list text-cyan-400 mr-2"></i> My Ads</h3>
+                <div id="myAdsList" class="space-y-3">
+                    <p class="text-gray-400">No ads yet. Create your first ad above!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Bot -->
+    <button id="chatToggle" class="fixed bottom-6 right-6 bg-gradient-to-r from-cyan-500 to-purple-600 w-14 h-14 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition z-50">
+        <i class="fas fa-robot text-white text-2xl"></i>
+    </button>
+    
+    <div id="chatBot" class="chat-bot">
+        <div class="bg-gradient-to-r from-cyan-600 to-purple-600 p-4 rounded-t-2xl flex justify-between items-center">
+            <span><i class="fas fa-robot mr-2"></i> <span data-key="bot_title">AI Business Assistant</span></span>
+            <div class="flex gap-2">
+                <button id="chatMinimize" class="text-white/80 hover:text-white"><i class="fas fa-minus"></i></button>
+                <button id="chatClose" class="text-white/80 hover:text-white"><i class="fas fa-times"></i></button>
+            </div>
+        </div>
+        <div id="chatMessages" class="chat-messages">
+            <div class="message-bot">
+                <i class="fas fa-robot mr-2"></i> Hello! I'm City Find AI Assistant. How can I help you today?<br>
+                <span class="text-xs text-cyan-300">Ask about ads, orders, payments, or tracking!</span>
+            </div>
+        </div>
+        <div class="p-3 border-t border-gray-700 flex gap-2 bg-black/30">
+            <button id="voiceRecordBtn" class="bg-purple-600 w-10 h-10 rounded-full hover:bg-purple-700 transition">
+                <i class="fas fa-microphone"></i>
+            </button>
+            <input type="text" id="chatInput" placeholder="Type your message..." class="flex-1 bg-white/10 rounded-full px-4 py-2 outline-none focus:border-cyan-400 border border-transparent focus:border-cyan-400">
+            <button id="chatSend" class="bg-cyan-500 w-10 h-10 rounded-full hover:bg-cyan-600 transition">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Auth Modal -->
+    <div id="authModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+        <div class="bg-gradient-to-br from-gray-900 to-black rounded-2xl p-8 max-w-md w-full mx-4 border border-cyan-500/30">
+            <div class="flex justify-between items-center mb-6">
+                <h2 id="modalTitle" class="text-2xl font-bold">Login</h2>
+                <button onclick="closeAuthModal()" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="authForm">
+                <div id="registerFields" class="hidden">
+                    <input type="text" id="regFullName" placeholder="Full Name" class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 mb-3 focus:outline-none focus:border-cyan-400" required>
+                    <input type="text" id="regPhone" placeholder="Phone Number" class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 mb-3 focus:outline-none focus:border-cyan-400" required>
+                    <select id="regRole" class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 mb-3 focus:outline-none focus:border-cyan-400">
+                        <option value="company">🏢 Company (Advertise)</option>
+                        <option value="provider">🚚 Service Provider (Deliver)</option>
+                        <option value="receiver">📦 Receiver (Buy)</option>
+                        <option value="viewer">👀 Viewer (Browse)</option>
+                    </select>
+                    <input type="text" id="regCompanyName" placeholder="Company Name (if company)" class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 mb-3 focus:outline-none focus:border-cyan-400">
+                </div>
+                <input type="email" id="authEmail" placeholder="Email" class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 mb-3 focus:outline-none focus:border-cyan-400" required>
+                <input type="password" id="authPassword" placeholder="Password" class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 mb-4 focus:outline-none focus:border-cyan-400" required>
+                <button type="submit" class="w-full bg-gradient-to-r from-cyan-500 to-purple-600 rounded-full py-3 font-semibold hover:scale-105 transition">
+                    <span id="submitBtnText">Login</span>
+                </button>
+            </form>
+            <p class="text-center text-gray-400 mt-4 text-sm">
+                <span id="toggleAuthText">Don't have an account?</span>
+                <button onclick="toggleAuthMode()" class="text-cyan-400 hover:underline ml-1" id="toggleAuthBtn">Register</button>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        let currentUser = null;
+        let currentLanguage = 'en';
+        let currentCategory = 'all';
+        let authMode = 'login';
+        
+        // Translations
+        const translations = {
+            en: {
+                nav_ads: "Ads", nav_tracking: "Track", nav_orders: "Orders", nav_dashboard: "Dashboard",
+                login: "Login", register: "Register", bot_title: "AI Business Assistant"
+            },
+            sw: {
+                nav_ads: "Matangazo", nav_tracking: "Fuatilia", nav_orders: "Maagizo", nav_dashboard: "Dashibodi",
+                login: "Ingia", register: "Jisajili", bot_title: "Msaidizi wa Biashara"
+            },
+            fr: {
+                nav_ads: "Annonces", nav_tracking: "Suivre", nav_orders: "Commandes", nav_dashboard: "Tableau",
+                login: "Connexion", register: "S'inscrire", bot_title: "Assistant Commercial"
+            },
+            es: {
+                nav_ads: "Anuncios", nav_tracking: "Rastrear", nav_orders: "Pedidos", nav_dashboard: "Tablero",
+                login: "Iniciar", register: "Registrarse", bot_title: "Asistente de Negocios"
+            },
+            ar: {
+                nav_ads: "إعلانات", nav_tracking: "تتبع", nav_orders: "طلبات", nav_dashboard: "لوحة القيادة",
+                login: "تسجيل الدخول", register: "تسجيل", bot_title: "مساعد الأعمال"
+            },
+            zh: {
+                nav_ads: "广告", nav_tracking: "追踪", nav_orders: "订单", nav_dashboard: "仪表板",
+                login: "登录", register: "注册", bot_title: "商业助手"
+            }
+        };
+        
+        function updateLanguage() {
+            const lang = currentLanguage;
+            document.querySelectorAll('[data-key]').forEach(el => {
+                const key = el.getAttribute('data-key');
+                if (translations[lang] && translations[lang][key]) {
+                    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                        el.placeholder = translations[lang][key];
+                    } else {
+                        el.textContent = translations[lang][key];
+                    }
+                }
+            });
+        }
+        
+        document.getElementById('languageSelect').addEventListener('change', (e) => {
+            currentLanguage = e.target.value;
+            updateLanguage();
+        });
+        
+        // Stars background
+        function createStars() {
+            for (let i = 0; i < 200; i++) {
+                const star = document.createElement('div');
+                star.classList.add('star');
+                star.style.width = Math.random() * 3 + 'px';
+                star.style.height = star.style.width;
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 5 + 's';
+                star.style.opacity = Math.random() * 0.7 + 0.1;
+                document.body.appendChild(star);
+            }
+        }
+        createStars();
+        
+        // Load ads
+        async function loadAds() {
+            try {
+                const categoryParam = currentCategory !== 'all' ? `?category=${currentCategory}` : '';
+                const res = await fetch(`/api/ads${categoryParam}`);
+                const ads = await res.json();
+                const grid = document.getElementById('adsGrid');
+                
+                if (ads.length === 0) {
+                    grid.innerHTML = `<div class="col-span-full text-center py-12 text-gray-400">
+                        <i class="fas fa-newspaper text-5xl mb-3 block"></i>
+                        <p>No ads found in this category. Be the first to advertise!</p>
+                    </div>`;
+                    return;
+                }
+                
+                grid.innerHTML = ads.map(ad => `
+                    <div class="ad-card rounded-xl overflow-hidden ${getGalaxyClass(ad.galaxyAnimation)}">
+                        ${ad.mediaType === 'video' ? 
+                            `<video src="${ad.mediaUrls[0]}" class="w-full h-48 object-cover" autoplay muted loop></video>` : 
+                            ad.mediaType === 'animation' ? 
+                            `<div class="w-full h-48 flex items-center justify-center bg-gradient-to-r from-cyan-500/20 to-purple-500/20"><i class="fas fa-film text-5xl text-cyan-400"></i></div>` :
+                            `<img src="${ad.mediaUrls[0] || 'https://placehold.co/400x300/0a0f2a/00f2fe?text=City+Find'}" class="w-full h-48 object-cover" onerror="this.src='https://placehold.co/400x300/0a0f2a/00f2fe?text=City+Find'">`
+                        }
+                        <div class="p-4">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="text-xs px-2 py-1 bg-cyan-500/30 rounded-full">${ad.adType}</span>
+                                <span class="text-xs px-2 py-1 bg-purple-500/30 rounded-full">${ad.category}</span>
+                            </div>
+                            <h3 class="font-bold text-lg">${ad.title}</h3>
+                            <p class="text-gray-300 text-sm mt-1 line-clamp-2">${ad.description}</p>
+                            <div class="flex justify-between items-center mt-3">
+                                <div>
+                                    <span class="text-cyan-400 font-bold">${ad.currency} ${ad.price}</span>
+                                    ${ad.companyId?.rating ? `<span class="text-yellow-400 text-sm ml-2"><i class="fas fa-star"></i> ${ad.companyId.rating.toFixed(1)}</span>` : ''}
+                                </div>
+                                <button onclick="contactBusiness('${ad.companyId?._id}')" class="bg-cyan-500 px-3 py-1 rounded-full text-sm hover:bg-cyan-600 transition">
+                                    <i class="fab fa-whatsapp"></i> Contact
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading ads:', error);
+            }
+        }
+        
+        function getGalaxyClass(animation) {
+            const map = {
+                'spiral_galaxy': 'galaxy-spiral',
+                'exploding_stars': 'galaxy-explode',
+                'nebula_cloud': 'galaxy-nebula',
+                'black_hole_pulse': 'galaxy-blackhole'
+            };
+            return map[animation] || 'galaxy-spiral';
+        }
+        
+        function filterAds(category) {
+            currentCategory = category;
+            document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`.category-btn[data-cat="${category}"]`).classList.add('active');
+            loadAds();
+        }
+        
+        document.getElementById('searchAds').addEventListener('input', async (e) => {
+            const search = e.target.value;
+            if (search.length < 2) return loadAds();
+            const res = await fetch(`/api/ads?search=${search}`);
+            const ads = await res.json();
+            // Update grid with filtered ads
+        });
+        
+        function showSection(section) {
+            document.getElementById('adsSection').classList.add('hidden');
+            document.getElementById('trackingSection').classList.add('hidden');
+            document.getElementById('ordersSection').classList.add('hidden');
+            document.getElementById('dashboardSection').classList.add('hidden');
+            
+            document.getElementById(`${section}Section`).classList.remove('hidden');
+            
+            ['navAds', 'navTracking', 'navOrders', 'navDashboard'].forEach(id => {
+                document.getElementById(id).classList.remove('bg-cyan-500/20');
+            });
+            document.getElementById(`nav${section.charAt(0).toUpperCase() + section.slice(1)}`).classList.add('bg-cyan-500/20');
+            
+            if (section === 'dashboard' && currentUser) loadDashboardData();
+            if (section === 'orders' && currentUser) loadOrders();
+        }
+        
+        async function trackOrder() {
+            const orderNumber = document.getElementById('trackOrderNumber').value.trim();
+            if (!orderNumber) {
+                alert('Please enter an order number');
+                return;
+            }
+            
+            const resultDiv = document.getElementById('trackResult');
+            resultDiv.classList.remove('hidden');
+            resultDiv.innerHTML = '<div class="loading-spinner mx-auto"></div><p class="text-center mt-3">Searching...</p>';
+            
+            try {
+                const res = await fetch(`/api/orders/${orderNumber}`);
+                const order = await res.json();
+                
+                if (order.error) {
+                    resultDiv.innerHTML = `<div class="bg-red-500/20 border border-red-500 rounded-lg p-4 text-center">
+                        <i class="fas fa-exclamation-triangle text-red-400 text-2xl mb-2 block"></i>
+                        ${order.error}
+                    </div>`;
+                    return;
+                }
+                
+                const statusColors = {
+                    pending: 'yellow', scanning: 'blue', in_transit: 'orange', 
+                    quality_check: 'purple', delivered: 'green', disputed: 'red', completed: 'green'
+                };
+                
+                resultDiv.innerHTML = `
+                    <div class="bg-white/10 rounded-xl p-5 border border-cyan-500/30">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="font-bold text-xl">${order.productName}</h3>
+                                <p class="text-gray-400 text-sm">Order #${order.orderNumber}</p>
+                            </div>
+                            <span class="px-3 py-1 rounded-full text-sm bg-${statusColors[order.status]}-500/30 text-${statusColors[order.status]}-300">
+                                ${order.status.toUpperCase()}
+                            </span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div><span class="text-gray-400">Quantity:</span> ${order.quantity}</div>
+                            <div><span class="text-gray-400">Payment:</span> ${order.paymentStatus}</div>
+                            ${order.currentLocation?.address ? `<div class="col-span-2"><span class="text-gray-400">Current Location:</span> ${order.currentLocation.address}</div>` : ''}
+                        </div>
+                        ${order.trackingHistory?.length > 0 ? `
+                            <div class="border-t border-white/10 pt-3 mt-2">
+                                <p class="text-sm text-gray-400 mb-2">Tracking History:</p>
+                                <div class="space-y-2 max-h-40 overflow-y-auto">
+                                    ${order.trackingHistory.map(h => `
+                                        <div class="text-sm flex justify-between">
+                                            <span>${new Date(h.timestamp).toLocaleString()}</span>
+                                            <span class="text-cyan-400">${h.status}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                        ${order.qualityCheckVideo ? `
+                            <div class="mt-3">
+                                <p class="text-sm text-gray-400">Quality Check Video:</p>
+                                <video src="${order.qualityCheckVideo}" class="w-full rounded-lg mt-1" controls></video>
+                            </div>
+                        ` : ''}
+                        <div class="mt-4 flex gap-2">
+                            <button onclick="contactProvider('${order.providerId?._id}')" class="flex-1 bg-green-600 py-2 rounded-full text-sm hover:bg-green-700 transition">
+                                <i class="fab fa-whatsapp"></i> Contact Provider
+                            </button>
+                            ${order.status === 'quality_check' && currentUser?.role === 'receiver' ? `
+                                <button onclick="showQualityCheck('${order.orderNumber}')" class="flex-1 bg-purple-600 py-2 rounded-full text-sm hover:bg-purple-700 transition">
+                                    <i class="fas fa-clipboard-check"></i> Quality Check
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="bg-red-500/20 border border-red-500 rounded-lg p-4 text-center">Error tracking order</div>`;
+            }
+        }
+        
+        async function loadOrders() {
+            if (!currentUser) {
+                document.getElementById('ordersList').innerHTML = `
+                    <div class="text-center py-12 text-gray-400">
+                        <i class="fas fa-lock text-4xl mb-3 block"></i>
+                        <p>Please login to view your orders</p>
+                        <button onclick="showAuthModal('login')" class="mt-3 px-4 py-2 bg-cyan-500 rounded-full">Login</button>
+                    </div>
+                `;
+                return;
+            }
+            
+            const res = await fetch('/api/orders', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+            const orders = await res.json();
+            
+            if (orders.length === 0) {
+                document.getElementById('ordersList').innerHTML = `
+                    <div class="text-center py-12 text-gray-400">
+                        <i class="fas fa-box-open text-4xl mb-3 block"></i>
+                        <p>No orders yet</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            document.getElementById('ordersList').innerHTML = orders.map(order => `
+                <div class="bg-white/5 rounded-xl p-4 border border-white/10">
+                    <div class="flex justify-between items-start flex-wrap gap-2">
+                        <div>
+                            <p class="font-bold">${order.productName}</p>
+                            <p class="text-sm text-gray-400">#${order.orderNumber}</p>
+                        </div>
+                        <span class="px-2 py-1 rounded-full text-xs bg-${order.status === 'completed' ? 'green' : order.status === 'pending' ? 'yellow' : 'blue'}-500/30">
+                            ${order.status}
+                        </span>
+                    </div>
+                    <div class="flex justify-between mt-3">
+                        <button onclick="trackOrderNumber('${order.orderNumber}')" class="text-cyan-400 text-sm hover:underline">
+                            <i class="fas fa-map-marker-alt"></i> Track
+                        </button>
+                        <button onclick="contactSeller('${order.senderId?._id}')" class="text-green-400 text-sm hover:underline">
+                            <i class="fab fa-whatsapp"></i> Contact
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        async function loadDashboardData() {
+            if (!currentUser) return;
+            
+            try {
+                if (currentUser.role === 'admin') {
+                    const res = await fetch('/api/admin/stats', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+                    const stats = await res.json();
+                    document.getElementById('statAds').textContent = stats.ads?.active || 0;
+                    document.getElementById('statOrders').textContent = stats.orders?.total || 0;
+                    document.getElementById('statRevenue').textContent = `$${stats.revenue?.total || 0}`;
+                } else if (currentUser.role === 'company') {
+                    const res = await fetch('/api/company/stats', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+                    const stats = await res.json();
+                    document.getElementById('statAds').textContent = stats.ads?.active || 0;
+                    document.getElementById('statOrders').textContent = stats.orders?.total || 0;
+                    document.getElementById('statRevenue').textContent = `$${stats.spent || 0}`;
+                    
+                    const myAdsRes = await fetch('/api/ads/my', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+                    const myAds = await myAdsRes.json();
+                    document.getElementById('myAdsList').innerHTML = myAds.map(ad => `
+                        <div class="bg-white/5 rounded-lg p-3 flex justify-between items-center">
+                            <div>
+                                <p class="font-medium">${ad.title}</p>
+                                <p class="text-sm text-gray-400">${ad.status} | ${ad.views || 0} views</p>
+                            </div>
+                            <button onclick="deleteAd('${ad._id}')" class="text-red-400 hover:text-red-300"><i class="fas fa-trash"></i></button>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+            }
+        }
+        
+        document.getElementById('createAdForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!currentUser) {
+                alert('Please login first');
+                showAuthModal('login');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('title', document.getElementById('adTitle').value);
+            formData.append('description', document.getElementById('adDescription').value);
+            formData.append('category', document.getElementById('adCategory').value);
+            formData.append('adType', document.getElementById('adType').value);
+            formData.append('price', document.getElementById('adPrice').value);
+            formData.append('mediaType', 'image');
+            
+            const mediaFile = document.getElementById('adMedia').files[0];
+            if (mediaFile) formData.append('media', mediaFile);
+            
+            const res = await fetch('/api/ads/create', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+                body: formData
+            });
+            
+            if (res.ok) {
+                alert('Ad published successfully!');
+                document.getElementById('createAdForm').reset();
+                loadDashboardData();
+                loadAds();
+            } else {
+                const error = await res.json();
+                alert('Error: ' + error.error);
+            }
+        });
+        
+        // Auth functions
+        function showAuthModal(mode) {
+            authMode = mode;
+            const modal = document.getElementById('authModal');
+            const title = document.getElementById('modalTitle');
+            const registerFields = document.getElementById('registerFields');
+            const submitBtn = document.getElementById('submitBtnText');
+            const toggleBtn = document.getElementById('toggleAuthBtn');
+            const toggleText = document.getElementById('toggleAuthText');
+            
+            if (mode === 'login') {
+                title.textContent = 'Login';
+                registerFields.classList.add('hidden');
+                submitBtn.textContent = 'Login';
+                toggleBtn.textContent = 'Register';
+                toggleText.textContent = "Don't have an account?";
+            } else {
+                title.textContent = 'Register';
+                registerFields.classList.remove('hidden');
+                submitBtn.textContent = 'Register';
+                toggleBtn.textContent = 'Login';
+                toggleText.textContent = 'Already have an account?';
+            }
+            modal.classList.remove('hidden');
+        }
+        
+        function closeAuthModal() {
+            document.getElementById('authModal').classList.add('hidden');
+        }
+        
+        function toggleAuthMode() {
+            authMode = authMode === 'login' ? 'register' : 'login';
+            showAuthModal(authMode);
+        }
+        
+        document.getElementById('authForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('authEmail').value;
+            const password = document.getElementById('authPassword').value;
+            
+            if (authMode === 'login') {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                if (res.ok) {
+                    const data = await res.json();
+                    localStorage.setItem('token', data.token);
+                    currentUser = data.user;
+                    updateUIForUser();
+                    closeAuthModal();
+                    loadDashboardData();
+                    loadOrders();
+                } else {
+                    const error = await res.json();
+                    alert('Login failed: ' + error.error);
+                }
+            } else {
+                const fullName = document.getElementById('regFullName').value;
+                const phone = document.getElementById('regPhone').value;
+                const role = document.getElementById('regRole').value;
+                const companyName = document.getElementById('regCompanyName').value;
+                
+                const res = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fullName, email, password, phone, role, companyName })
+                });
+                
+                if (res.ok) {
+                    const data = await res.json();
+                    localStorage.setItem('token', data.token);
+                    currentUser = data.user;
+                    updateUIForUser();
+                    closeAuthModal();
+                    alert('Registration successful! Welcome to City Find!');
+                } else {
+                    const error = await res.json();
+                    alert('Registration failed: ' + error.error);
+                }
+            }
+        });
+        
+        function updateUIForUser() {
+            if (currentUser) {
+                document.getElementById('authButtons').classList.add('hidden');
+                document.getElementById('userInfo').classList.remove('hidden');
+                document.getElementById('userName').textContent = currentUser.fullName || currentUser.email.split('@')[0];
+                document.getElementById('userRole').textContent = currentUser.role;
+            } else {
+                document.getElementById('authButtons').classList.remove('hidden');
+                document.getElementById('userInfo').classList.add('hidden');
+            }
+        }
+        
+        function logout() {
+            localStorage.removeItem('token');
+            currentUser = null;
+            updateUIForUser();
+            showSection('ads');
+            alert('Logged out successfully');
+        }
+        
+        // Chat bot functions
+        const chatToggle = document.getElementById('chatToggle');
+        const chatBot = document.getElementById('chatBot');
+        const chatClose = document.getElementById('chatClose');
+        const chatMinimize = document.getElementById('chatMinimize');
+        const chatInput = document.getElementById('chatInput');
+        const chatSend = document.getElementById('chatSend');
+        const chatMessages = document.getElementById('chatMessages');
+        
+        chatToggle.onclick = () => chatBot.classList.add('open');
+        chatClose.onclick = () => chatBot.classList.remove('open');
+        chatMinimize.onclick = () => chatBot.classList.remove('open');
+        
+        async function sendBotMessage() {
+            const msg = chatInput.value.trim();
+            if (!msg) return;
+            
+            chatMessages.innerHTML += `<div class="message-user"><i class="fas fa-user mr-2"></i> ${escapeHtml(msg)}</div>`;
+            chatInput.value = '';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            try {
+                const res = await fetch('/api/bot/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        message: msg, 
+                        context: { userRole: currentUser?.role || 'guest', userEmail: currentUser?.email },
+                        language: currentLanguage
+                    })
+                });
+                const data = await res.json();
+                chatMessages.innerHTML += `<div class="message-bot"><i class="fas fa-robot mr-2"></i> ${data.reply}</div>`;
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            } catch (error) {
+                chatMessages.innerHTML += `<div class="message-bot"><i class="fas fa-robot mr-2"></i> Sorry, I'm having trouble connecting. Please contact support at +255796323348 on WhatsApp.</div>`;
+            }
+        }
+        
+        chatSend.onclick = sendBotMessage;
+        chatInput.onkeypress = (e) => { if (e.key === 'Enter') sendBotMessage(); };
+        
+        // Voice recording
+        let mediaRecorder;
+        let audioChunks = [];
+        
+        document.getElementById('voiceRecordBtn').onclick = async () => {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+                document.getElementById('voiceRecordBtn').innerHTML = '<i class="fas fa-microphone"></i>';
+                return;
+            }
+            
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+            
+            mediaRecorder.ondataavailable = (event) => {
+                audioChunks.push(event.data);
+            };
+            
+            mediaRecorder.onstop = async () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                const audioUrl = URL.createObjectURL(audioBlob);
+                
+                chatMessages.innerHTML += `<div class="message-user"><i class="fas fa-microphone mr-2"></i> Voice message sent</div>`;
+                
+                // Here you would upload to server and send to bot
+                stream.getTracks().forEach(track => track.stop());
+            };
+            
+            mediaRecorder.start();
+            document.getElementById('voiceRecordBtn').innerHTML = '<i class="fas fa-stop text-red-400"></i>';
+        };
+        
+        function escapeHtml(str) {
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+        
+        function contactBusiness(companyId) {
+            window.open('https://wa.me/255796323348?text=I%27m%20interested%20in%20your%20ad%20on%20City%20Find', '_blank');
+        }
+        
+        function contactProvider(providerId) {
+            window.open('https://wa.me/255796323348?text=I%20need%20help%20with%20my%20delivery', '_blank');
+        }
+        
+        function contactSeller(sellerId) {
+            window.open('https://wa.me/255796323348?text=I%20have%20a%20question%20about%20my%20order', '_blank');
+        }
+        
+        function trackOrderNumber(orderNumber) {
+            document.getElementById('trackOrderNumber').value = orderNumber;
+            showSection('tracking');
+            trackOrder();
+        }
+        
+        function showQualityCheck(orderNumber) {
+            alert(`Quality check feature for order ${orderNumber}\nPlease record video of the product and confirm if quality matches specs.`);
+        }
+        
+        async function deleteAd(adId) {
+            if (confirm('Delete this ad?')) {
+                await fetch(`/api/ads/${adId}`, {
+                    method: 'DELETE',
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                });
+                loadDashboardData();
+                loadAds();
+            }
+        }
+        
+        // Check if user is logged in on load
+        const token = localStorage.getItem('token');
+        if (token) {
+            fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })
+                .then(res => res.json())
+                .then(user => {
+                    currentUser = user;
+                    updateUIForUser();
+                })
+                .catch(() => localStorage.removeItem('token'));
+        }
+        
+        // Socket.io for real-time updates
+        socket.on('order-update', (data) => {
+            console.log('Order update:', data);
+            if (document.getElementById('trackOrderNumber').value === data.orderNumber) {
+                trackOrder();
+            }
+            if (currentUser) loadOrders();
+        });
+        
+        // Initial load
+        loadAds();
+        updateLanguage();
+    </script>
+</body>
+</html>
