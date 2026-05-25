@@ -100,4 +100,119 @@ router.post('/orders/scan', authMiddleware, async (req, res) => {
             status: order.status,
             timestamp: new Date(),
             videoUrl,
-           
+            photoUrls: photoUrls || []
+        });
+        
+        // Status progression
+        if (order.status === 'pending') {
+            order.status = 'scanning';
+            order.providerId = req.user.id;
+        } else if (order.status === 'scanning') {
+            order.status = 'in_transit';
+        } else if (order.status === 'in_transit') {
+            order.status = 'quality_check';
+        }
+        
+        order.currentLocation = location;
+        await order.save();
+        
+        // Emit socket event (will be handled in server.js)
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('order-update', { orderNumber, status: order.status, location, timestamp: new Date() });
+        }
+        
+        res.json({ success: true, order });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// Update GPS Location
+router.post('/orders/update-location', authMiddleware, async (req, res) => {
+    try {
+        const { orderNumber, lat, lng, address } = req.body;
+        const order = await Order.findOne({ orderNumber });
+        if (!order) return res.status(404).json({ error: 'Order not found' });
+        
+        order.currentLocation = { lat, lng, address };
+        order.trackingHistory.push({
+            location: { lat, lng, address },
+            status: order.status,
+            timestamp: new Date()
+        });
+        
+        await order.save();
+        
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('location-update', { orderNumber, lat, lng, address });
+        }
+        
+        res.json({ success: true, location: order.currentLocation });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// Quality Check
+router.post('/orders/quality-check', authMiddleware, async (req, res) => {
+    try {
+        const { orderNumber, qualityPassed, videoUrl, photos, issues } = req.body;
+        const order = await Order.findOne({ orderNumber });
+        if (!order) return res.status(404).json({ error: 'Order not found' });
+        
+        order.qualityCheckVideo = videoUrl;
+        order.qualityCheckPhotos = photos || [];
+        order.qualityPassed = qualityPassed;
+        
+        if (qualityPassed) {
+            order.status = 'completed';
+            order.actualDelivery = new Date();
+            
+            const Payment = require('../models/Payment');
+            await Payment.findOneAndUpdate(
+                { orderId: order._id },
+                { status: 'completed' }
+            );
+        } else {
+            order.status = 'disputed';
+            order.qualityIssues = issues;
+        }
+        
+        await order.save();
+        
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('quality-check-result', { orderNumber, qualityPassed, issues });
+        }
+        
+        res.json({ success: true, order });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// Resolve Dispute
+router.post('/orders/:orderNumber/resolve', authMiddleware, async (req, res) => {
+    try {
+        const { action } = req.body;
+        const order = await Order.findOne({ orderNumber: req.params.orderNumber });
+        if (!order) return res.status(404).json({ error: 'Order not found' });
+        
+        if (action === 'refund') {
+            order.paymentStatus = 'refunded';
+            order.status = 'disputed';
+        } else if (action === 'release') {
+            order.paymentStatus = 'released';
+            order.status = 'completed';
+        }
+        
+        await order.save();
+        res.json({ success: true, order });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+module.exports = router;
