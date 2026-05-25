@@ -1,7 +1,7 @@
 {
   "name": "city-find-global",
   "version": "2.0.0",
-  "description": "Global Business Ads & Logistics Platform",
+  "description": "Global Business Ads & Logistics Platform with QR/Barcode, GPS Tracking, Video Calls",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -21,6 +21,13 @@
     "qrcode": "^1.5.3",
     "bwip-js": "^4.0.2",
     "nodemailer": "^6.9.5",
-    "cors": "^2.8.5"
+    "cors": "^2.8.5",
+    "multer-storage-cloudinary": "^4.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
