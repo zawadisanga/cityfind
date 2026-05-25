@@ -23,7 +23,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ============ DATABASE SCHEMAS (Embedded to avoid missing files) ============
+// ============ DATABASE SCHEMAS ============
 const userSchema = new mongoose.Schema({
     fullName: String,
     email: { type: String, unique: true },
@@ -287,6 +287,7 @@ app.post('/api/orders/create', authMiddleware, async (req, res) => {
         const qrData = JSON.stringify({ orderNumber, productName, senderId: req.user.id, timestamp: Date.now() });
         const qrImage = await QRCode.toDataURL(qrData);
         
+        let barcodeBase64 = '';
         try {
             const barcodeBuffer = await bwipjs.toBuffer({
                 bcid: 'code128',
@@ -296,10 +297,9 @@ app.post('/api/orders/create', authMiddleware, async (req, res) => {
                 includetext: true,
                 textxalign: 'center'
             });
-            var barcodeBase64 = barcodeBuffer.toString('base64');
+            barcodeBase64 = barcodeBuffer.toString('base64');
         } catch (barcodeErr) {
             console.error('Barcode error:', barcodeErr);
-            var barcodeBase64 = '';
         }
         
         const order = new Order({
@@ -551,38 +551,20 @@ app.get('/api/ratings/company/:companyId', async (req, res) => {
 app.get('/api/admin/stats', authMiddleware, adminMiddleware, async (req, res) => {
     try {
         const totalUsers = await User.countDocuments();
-        const totalCompanies = await User.countDocuments({ role: 'company' });
-        const totalProviders = await User.countDocuments({ role: 'provider' });
-        const totalReceivers = await User.countDocuments({ role: 'receiver' });
-        
         const totalAds = await Ad.countDocuments();
         const activeAds = await Ad.countDocuments({ status: 'active' });
-        const pendingAds = await Ad.countDocuments({ status: 'pending' });
-        
         const totalOrders = await Order.countDocuments();
         const completedOrders = await Order.countDocuments({ status: 'completed' });
-        
         const totalRevenue = await Payment.aggregate([
             { $match: { status: 'completed' } },
             { $group: { _id: null, total: { $sum: '$amount' } } }
         ]);
         
-        const recentPayments = await Payment.find({ status: 'completed' }).sort({ createdAt: -1 }).limit(5);
-        const recentUsers = await User.find().sort({ createdAt: -1 }).limit(5);
-        
-        const categoryStats = await Ad.aggregate([
-            { $match: { status: 'active' } },
-            { $group: { _id: '$category', count: { $sum: 1 } } }
-        ]);
-        
         res.json({
-            users: { total: totalUsers, companies: totalCompanies, providers: totalProviders, receivers: totalReceivers },
-            ads: { total: totalAds, active: activeAds, pending: pendingAds },
+            users: { total: totalUsers },
+            ads: { total: totalAds, active: activeAds },
             orders: { total: totalOrders, completed: completedOrders },
-            revenue: { total: totalRevenue[0]?.total || 0, monthly: totalRevenue[0]?.total || 0 },
-            recentPayments,
-            recentUsers,
-            categoryStats
+            revenue: { total: totalRevenue[0]?.total || 0 }
         });
     } catch (error) {
         res.status(400).json({ error: error.message });
@@ -607,67 +589,7 @@ app.put('/api/admin/users/:id/verify', authMiddleware, adminMiddleware, async (r
     }
 });
 
-// ============ DASHBOARD STATS ============
-app.get('/api/company/stats', authMiddleware, async (req, res) => {
-    try {
-        if (req.user.role !== 'company') return res.status(403).json({ error: 'Company access required' });
-        
-        const totalAds = await Ad.countDocuments({ companyId: req.user.id });
-        const activeAds = await Ad.countDocuments({ companyId: req.user.id, status: 'active' });
-        const totalOrders = await Order.countDocuments({ senderId: req.user.id });
-        const completedOrders = await Order.countDocuments({ senderId: req.user.id, status: 'completed' });
-        
-        const totalSpent = await Payment.aggregate([
-            { $match: { senderName: req.user.fullName, status: 'completed' } },
-            { $group: { _id: null, total: { $sum: '$amount' } } }
-        ]);
-        
-        res.json({
-            ads: { total: totalAds, active: activeAds },
-            orders: { total: totalOrders, completed: completedOrders },
-            spent: totalSpent[0]?.total || 0
-        });
-    } catch (error) {
-        res.status(400).json({ error: error.message });
-    }
-});
-
-app.get('/api/provider/stats', authMiddleware, async (req, res) => {
-    try {
-        if (req.user.role !== 'provider') return res.status(403).json({ error: 'Provider access required' });
-        
-        const totalDeliveries = await Order.countDocuments({ providerId: req.user.id });
-        const completedDeliveries = await Order.countDocuments({ providerId: req.user.id, status: 'completed' });
-        const pendingDeliveries = await Order.countDocuments({ providerId: req.user.id, status: { $in: ['pending', 'scanning', 'in_transit'] } });
-        
-        res.json({
-            deliveries: { total: totalDeliveries, completed: completedDeliveries, pending: pendingDeliveries },
-            rating: req.user.rating
-        });
-    } catch (error) {
-        res.status(400).json({ error: error.message });
-    }
-});
-
-app.get('/api/receiver/stats', authMiddleware, async (req, res) => {
-    try {
-        if (req.user.role !== 'receiver') return res.status(403).json({ error: 'Receiver access required' });
-        
-        const totalOrders = await Order.countDocuments({ receiverId: req.user.id });
-        const receivedOrders = await Order.countDocuments({ receiverId: req.user.id, status: 'completed' });
-        const pendingOrders = await Order.countDocuments({ receiverId: req.user.id, status: { $in: ['pending', 'scanning', 'in_transit'] } });
-        
-        res.json({
-            orders: { total: totalOrders, received: receivedOrders, pending: pendingOrders },
-            spent: 0
-        });
-    } catch (error) {
-        res.status(400).json({ error: error.message });
-    }
-});
-
-// ============ AI BOT ROUTE - CLEAN VERSION ============
-// ============ AI BOT ROUTE - SIMPLE VERSION (NO GEMINI) ============
+// ============ AI BOT ROUTE - SIMPLE VERSION (NO GEMINI API) ============
 app.post('/api/bot/chat', async (req, res) => {
     try {
         const { message, language } = req.body;
@@ -675,46 +597,40 @@ app.post('/api/bot/chat', async (req, res) => {
         const lowerMsg = (message || '').toLowerCase();
         let reply = '';
         
-        if (lowerMsg.includes('bei') || lowerMsg.includes('price') || lowerMsg.includes('gharama')) {
+        if (lowerMsg.includes('bei') || lowerMsg.includes('price') || lowerMsg.includes('gharama') || lowerMsg.includes('kiasi')) {
             reply = "💰 **Bei za Matangazo:**\n• Banner: $100 kwa mwezi\n• Featured: $500 kwa mwezi\n• Sponsored: $1,000 kwa mwezi\n\nKwa maelezo zaidi, WhatsApp: +255796323348";
         }
-        else if (lowerMsg.includes('lipa') || lowerMsg.includes('payment') || lowerMsg.includes('malipo') || lowerMsg.includes('bank')) {
-            reply = "🏦 **Maelezo ya Malipo:**\n\nBenki: NMB Bank\nJina la Akaunti: City Tech Holdings\nNamba ya Akaunti: 5161480052318274\nSWIFT: NMBCTZTZ\n\nBaada ya malipo, tuna proof yako kwa WhatsApp: +255796323348";
+        else if (lowerMsg.includes('lipa') || lowerMsg.includes('payment') || lowerMsg.includes('malipo') || lowerMsg.includes('bank') || lowerMsg.includes('nmb')) {
+            reply = "🏦 **Maelezo ya Malipo:**\n\nBenki: NMB Bank\nJina la Akaunti: City Tech Holdings\nNamba ya Akaunti: 5161480052318274\nSWIFT: NMBCTZTZ\n\n💵 **Njia za Malipo:**\n• Direct Bank Transfer (NMB)\n• Mobile Money (M-Pesa, Tigo Pesa, Airtel Money)\n• Cash on Delivery\n\nBaada ya malipo, tuna proof yako kwa WhatsApp: +255796323348";
         }
-        else if (lowerMsg.includes('simu') || lowerMsg.includes('phone') || lowerMsg.includes('contact')) {
-            reply = "📞 **Mawasiliano Yetu:**\n\nWhatsApp/Simu: +255796323348\nBarua Pepe: citytechuk@gmail.com\n\nTunapatikana 24/7!";
+        else if (lowerMsg.includes('refund') || lowerMsg.includes('rejesha') || lowerMsg.includes('reimburse')) {
+            reply = "💰 **Kuhusu Refund (Kurejeshewa Pesa):**\n\nPesa yako itarejeshwa na **City Tech Holdings** kupitia NMB Bank (Akaunti: 5161480052318274).\n\n📌 **Mchakato wa Refund:**\n1. Ukifanya quality check na bidhaa hailingani\n2. Tunachakata ombi lako ndani ya saa 24\n3. Pesa inarejeshwa kwenye M-Pesa au Akaunti yako ya Benki\n4. Muda wa kurejesha: Siku 1-3\n\nKwa msaada zaidi, WhatsApp: +255796323348";
         }
-        else if (lowerMsg.includes('track') || lowerMsg.includes('fuatilia')) {
-            reply = "📦 **Kufuatilia Order Yako:**\nNenda kwenye sehemu ya 'Track' na ingiza namba yako ya order (inaanza na ORD).";
+        else if (lowerMsg.includes('simu') || lowerMsg.includes('phone') || lowerMsg.includes('contact') || lowerMsg.includes('wasiliana') || lowerMsg.includes('namba')) {
+            reply = "📞 **Mawasiliano Yetu:**\n\nWhatsApp/Simu: +255796323348\nBarua Pepe: citytechuk@gmail.com\n\nTunapatikana 24/7 kwa maswali yako yote!";
         }
-        else if (lowerMsg.includes('quality') || lowerMsg.includes('ubora')) {
-            reply = "✅ **Quality Check Process:**\n1. Pokea bidhaa\n2. Rekodi video fupi\n3. Piga picha\n4. Pakia kwenye website\n5. Kama bidhaa hailingani, utarejeshewa pesa ndani ya siku 3";
+        else if (lowerMsg.includes('track') || lowerMsg.includes('fuatilia') || lowerMsg.includes('order') || lowerMsg.includes('agizo')) {
+            reply = "📦 **Kufuatilia Order Yako:**\n\nNenda kwenye sehemu ya 'Track' kwenye website yetu na ingiza namba yako ya order (inaanza na ORD).\n\nAu tuma namba yako ya order hapa nikusaidie kufuatilia!";
+        }
+        else if (lowerMsg.includes('quality') || lowerMsg.includes('ubora') || lowerMsg.includes('check') || lowerMsg.includes('kagua')) {
+            reply = "✅ **Quality Check Process:**\n\n1. Pokea bidhaa yako\n2. Rekodi video fupi (sekunde 10-20) ikionyesha bidhaa\n3. Piga picha 2-3 za bidhaa\n4. Tembelea sehemu ya 'Quality Check' kwenye website yako\n5. Pakia video na picha\n\nKama bidhaa hailingani na maelezo, utalipwa pesa yako tena ndani ya siku 3!";
         }
         else {
-            reply = "👋 Hello! I'm City Find AI Assistant.\n\nI can help you with:\n• 💰 Bei za Matangazo\n• 📦 Kufuatilia delivery\n• 💳 Malipo (NMB Bank)\n• ✅ Quality checks\n\n📞 WhatsApp: +255796323348\n📧 Email: citytechuk@gmail.com\n\nNiulize swali lolote!";
+            reply = "👋 Hello! I'm City Find AI Assistant.\n\nI can help you with:\n• 💰 **Bei za Matangazo** - Banner $100, Featured $500, Sponsored $1000\n• 📦 **Kufuatilia delivery** - Tuma order number yako\n• 💳 **Malipo** - NMB Bank: 5161480052318274\n• ✅ **Quality check** - Ukaguzi wa bidhaa kwa video\n• 🔄 **Refund** - Kurejeshewa pesa kama bidhaa hailingani\n\n📞 WhatsApp: +255796323348\n📧 Email: citytechuk@gmail.com\n\nNiulize swali lolote kuhusu huduma zetu!";
         }
         
         res.json({ reply: reply });
-        
     } catch (error) {
         console.error('Bot Error:', error.message);
-        res.json({ reply: "Tafadhali wasiliana nasi kwenye WhatsApp: +255796323348 kwa msaada." });
+        res.json({ reply: "Samahani, kuna tatizo. Tafadhali wasiliana nasi kwenye WhatsApp: +255796323348 kwa msaada wa haraka." });
     }
 });
-        // FALLBACK: Simple response if Gemini fails
-        let fallbackReply = "";
-        const lowerMsg = (message || '').toLowerCase();
-        
-        if (lowerMsg.includes('refund') || lowerMsg.includes('reimburse') || lowerMsg.includes('lipa') || lowerMsg.includes('rejesha')) {
-            fallbackReply = "💰 **Kuhusu Malipo na Refund:**\n\nPesa yako itarejeshwa na **City Tech Holdings** kupitia NMB Bank (Akaunti: 5161480052318274).\n\n📌 **Mchakato wa Refund:**\n1. Ukifanya quality check na bidhaa hailingani\n2. Tunachakata ombi lako ndani ya saa 24\n3. Pesa inarejeshwa kwenye M-Pesa au Akaunti yako ya Benki\n4. Muda wa kurejesha: Siku 1-3\n\nKwa msaada zaidi, WhatsApp: +255796323348";
-        } else {
-            fallbackReply = "👋 Hello! I'm City Find AI Assistant.\n\n📞 WhatsApp: +255796323348\n📧 Email: citytechuk@gmail.com\n🏦 NMB Bank: 5161480052318274 (City Tech Holdings)\n\nNiulize swali lolote kuhusu bei, malipo, au refunds!";
-        }
-        
-        res.json({ reply: fallbackReply });
-    }
-});
+
 // ============ SERVE HTML FILES ============
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 app.get('/dashboard-admin.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'dashboard-admin.html'));
 });
@@ -759,11 +675,6 @@ io.on('connection', (socket) => {
         }
         console.log('🔌 Client disconnected:', socket.id);
     });
-});
-
-// ============ ROOT ROUTE ============
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // ============ START SERVER ============
