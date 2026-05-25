@@ -100,6 +100,7 @@
         }
         .lang-selector select { background: transparent; color: white; border: none; outline: none; cursor: pointer; }
         
+        /* Chat Bot Styles */
         .chat-bot {
             position: fixed;
             bottom: 90px;
@@ -113,8 +114,34 @@
             display: none;
             flex-direction: column;
             z-index: 1000;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-origin: bottom right;
         }
-        .chat-bot.open { display: flex; }
+        .chat-bot.open {
+            display: flex !important;
+            animation: chatPopIn 0.3s ease-out;
+        }
+        @keyframes chatPopIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .voice-active {
+            animation: voicePulse 1s ease-in-out infinite;
+        }
+        @keyframes voicePulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(0, 242, 254, 0.7); background: rgba(0, 242, 254, 0.2); }
+            50% { box-shadow: 0 0 0 10px rgba(0, 242, 254, 0); background: rgba(0, 242, 254, 0.4); }
+        }
+        .screen-share-active { background: #00f2fe !important; color: #000 !important; animation: screenPulse 1.5s ease-in-out infinite; }
+        @keyframes screenPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(0,242,254,0.7); } 50% { box-shadow: 0 0 0 8px rgba(0,242,254,0.3); } }
+        .voice-call-active { background: #ff4444 !important; animation: callPulse 1s ease-in-out infinite; }
+        @keyframes callPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(255,68,68,0.7); } 50% { box-shadow: 0 0 0 10px rgba(255,68,68,0.3); } }
+        .speech-active { background: #00ff88 !important; color: #000 !important; animation: speechPulse 0.8s ease-in-out infinite; }
+        @keyframes speechPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+        .typing-indicator { display: flex; align-items: center; gap: 4px; }
+        .typing-dots::after { content: '...'; animation: typingDot 1.5s steps(4, end) infinite; }
+        @keyframes typingDot { 0%,20% { content: ''; } 40% { content: '.'; } 60% { content: '..'; } 80%,100% { content: '...'; } }
+        
         .chat-messages { flex: 1; overflow-y: auto; padding: 16px; }
         .message-bot { background: linear-gradient(135deg, #1a0a3e, #0a0f2a); color: white; border-radius: 18px; border-top-left-radius: 4px; padding: 10px 14px; margin: 8px 0; max-width: 85%; }
         .message-user { background: linear-gradient(135deg, #00f2fe, #9b51e0); color: white; border-radius: 18px; border-top-right-radius: 4px; padding: 10px 14px; margin: 8px 0 8px auto; max-width: 85%; }
@@ -143,31 +170,25 @@
         .rating-stars i:hover { transform: scale(1.2); }
         
         /* Blog Styles */
-        .blog-card {
-            transition: all 0.3s ease;
-        }
-        .blog-card:hover {
-            transform: translateY(-5px);
-        }
+        .blog-card { transition: all 0.3s ease; }
+        .blog-card:hover { transform: translateY(-5px); }
         .blog-content h2 { color: #00f2fe; margin-top: 1rem; margin-bottom: 0.5rem; }
         .blog-content h3 { color: #9b51e0; margin-top: 0.8rem; margin-bottom: 0.3rem; }
         .blog-content ul, .blog-content ol { margin-left: 1.5rem; margin-bottom: 1rem; }
         .blog-content li { margin-bottom: 0.3rem; }
-        .share-btn {
-            transition: all 0.2s;
-        }
-        .share-btn:hover {
-            transform: scale(1.05);
-        }
+        .share-btn { transition: all 0.2s; }
+        .share-btn:hover { transform: scale(1.05); }
         
-        /* PWA Install Banner Animation */
-        @keyframes slideUp {
-            from { transform: translateY(100px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        .install-banner {
-            animation: slideUp 0.5s ease;
-        }
+        @keyframes slideUp { from { transform: translateY(100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .install-banner { animation: slideUp 0.5s ease; }
+        
+        /* New Features Styles */
+        .referral-card { background: linear-gradient(135deg, rgba(0,242,254,0.1), rgba(155,81,224,0.1)); border: 1px solid rgba(0,242,254,0.3); }
+        .dispute-card { border-left: 3px solid #ff4444; }
+        .notification-badge { position: absolute; top: -5px; right: -5px; background: #ff4444; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; display: flex; align-items: center; justify-content: center; }
+        .favorite-active { color: #ff4444 !important; }
+        .nearby-business { transition: all 0.3s ease; }
+        .nearby-business:hover { transform: translateX(5px); background: rgba(0,242,254,0.1); }
     </style>
 </head>
 <body>
@@ -209,6 +230,9 @@
                 <button onclick="showSection('dashboard')" class="px-4 py-2 rounded-full hover:bg-cyan-500/20 transition" id="navDashboard"><i class="fas fa-chart-line mr-2"></i> <span data-key="nav_dashboard">Dashboard</span></button>
                 <button onclick="showSection('delivery')" class="px-4 py-2 rounded-full hover:bg-cyan-500/20 transition" id="navDelivery"><i class="fas fa-truck-moving mr-2"></i> Delivery</button>
                 <button onclick="showSection('blog')" class="px-4 py-2 rounded-full hover:bg-cyan-500/20 transition" id="navBlog"><i class="fas fa-newspaper mr-2"></i> Blog</button>
+                <button onclick="showSection('referral')" class="px-4 py-2 rounded-full hover:bg-cyan-500/20 transition" id="navReferral"><i class="fas fa-gift mr-2"></i> Referral</button>
+                <button onclick="showSection('notifications')" class="px-4 py-2 rounded-full hover:bg-cyan-500/20 transition" id="navNotifications"><i class="fas fa-bell mr-2"></i> Notifications</button>
+                <button onclick="showSection('disputes')" class="px-4 py-2 rounded-full hover:bg-cyan-500/20 transition" id="navDisputes"><i class="fas fa-gavel mr-2"></i> Disputes</button>
             </div>
             <div class="flex gap-2">
                 <div id="authButtons" class="flex gap-2">
@@ -216,11 +240,15 @@
                     <button onclick="showAuthModal('register')" class="px-4 py-2 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-full hover:opacity-90 transition"><i class="fas fa-user-plus mr-2"></i> <span data-key="register">Register</span></button>
                 </div>
                 <div id="userInfo" class="hidden items-center gap-3">
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-2 relative">
                         <div class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center"><i class="fas fa-user text-white text-sm"></i></div>
                         <span id="userName" class="font-medium"></span>
                         <span id="userRole" class="text-xs px-2 py-1 bg-cyan-500/30 rounded-full"></span>
                         <span id="walletBadge" class="text-xs px-2 py-1 bg-green-500/30 rounded-full"><i class="fas fa-wallet"></i> $0</span>
+                        <div id="notificationIcon" class="relative cursor-pointer">
+                            <i class="fas fa-bell text-cyan-400 text-lg"></i>
+                            <span id="notificationCount" class="notification-badge hidden">0</span>
+                        </div>
                     </div>
                     <button onclick="logout()" class="px-3 py-1 bg-red-500/30 rounded-full hover:bg-red-500/50 text-sm"><i class="fas fa-sign-out-alt"></i></button>
                 </div>
@@ -313,81 +341,111 @@
         <div id="blogSection" class="hidden">
             <h2 class="text-2xl font-bold mb-6"><i class="fas fa-newspaper text-cyan-400 mr-2"></i> Business Blog</h2>
             <p class="text-gray-400 mb-8">Tips, strategies, and insights to grow your business online</p>
-            
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <!-- Blog Post 1 -->
                 <div class="glass-card p-6 blog-card cursor-pointer" onclick="openBlogPost(1)">
-                    <div class="w-full h-48 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 rounded-lg flex items-center justify-center mb-4">
-                        <i class="fas fa-chart-line text-5xl text-cyan-400"></i>
-                    </div>
+                    <div class="w-full h-48 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 rounded-lg flex items-center justify-center mb-4"><i class="fas fa-chart-line text-5xl text-cyan-400"></i></div>
                     <h3 class="text-xl font-bold mb-2">How to Advertise Your Business Online</h3>
                     <p class="text-gray-400 text-sm mb-3">Learn the best strategies to reach more customers and grow your business online in 2026.</p>
-                    <div class="flex justify-between items-center">
-                        <span class="text-xs text-cyan-400"><i class="far fa-calendar-alt mr-1"></i> May 25, 2026</span>
-                        <span class="text-xs text-gray-500"><i class="far fa-eye"></i> 1.2k reads</span>
-                    </div>
+                    <div class="flex justify-between items-center"><span class="text-xs text-cyan-400"><i class="far fa-calendar-alt mr-1"></i> May 25, 2026</span><span class="text-xs text-gray-500"><i class="far fa-eye"></i> 1.2k reads</span></div>
                 </div>
-                
-                <!-- Blog Post 2 -->
                 <div class="glass-card p-6 blog-card cursor-pointer" onclick="openBlogPost(2)">
-                    <div class="w-full h-48 bg-gradient-to-r from-green-500/20 to-cyan-500/20 rounded-lg flex items-center justify-center mb-4">
-                        <i class="fas fa-truck text-5xl text-green-400"></i>
-                    </div>
+                    <div class="w-full h-48 bg-gradient-to-r from-green-500/20 to-cyan-500/20 rounded-lg flex items-center justify-center mb-4"><i class="fas fa-truck text-5xl text-green-400"></i></div>
                     <h3 class="text-xl font-bold mb-2">Delivery Tracking Tips for Business</h3>
                     <p class="text-gray-400 text-sm mb-3">How to ensure your products reach customers safely and on time every time.</p>
-                    <div class="flex justify-between items-center">
-                        <span class="text-xs text-cyan-400"><i class="far fa-calendar-alt mr-1"></i> May 24, 2026</span>
-                        <span class="text-xs text-gray-500"><i class="far fa-eye"></i> 856 reads</span>
-                    </div>
+                    <div class="flex justify-between items-center"><span class="text-xs text-cyan-400"><i class="far fa-calendar-alt mr-1"></i> May 24, 2026</span><span class="text-xs text-gray-500"><i class="far fa-eye"></i> 856 reads</span></div>
                 </div>
-                
-                <!-- Blog Post 3 -->
                 <div class="glass-card p-6 blog-card cursor-pointer" onclick="openBlogPost(3)">
-                    <div class="w-full h-48 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-lg flex items-center justify-center mb-4">
-                        <i class="fas fa-star text-5xl text-yellow-400"></i>
-                    </div>
+                    <div class="w-full h-48 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-lg flex items-center justify-center mb-4"><i class="fas fa-star text-5xl text-yellow-400"></i></div>
                     <h3 class="text-xl font-bold mb-2">Quality Check: Why It Matters</h3>
                     <p class="text-gray-400 text-sm mb-3">Building trust with customers through quality verification and transparency.</p>
-                    <div class="flex justify-between items-center">
-                        <span class="text-xs text-cyan-400"><i class="far fa-calendar-alt mr-1"></i> May 23, 2026</span>
-                        <span class="text-xs text-gray-500"><i class="far fa-eye"></i> 2.1k reads</span>
-                    </div>
+                    <div class="flex justify-between items-center"><span class="text-xs text-cyan-400"><i class="far fa-calendar-alt mr-1"></i> May 23, 2026</span><span class="text-xs text-gray-500"><i class="far fa-eye"></i> 2.1k reads</span></div>
                 </div>
             </div>
-            
-            <!-- Blog Post Modal -->
             <div id="blogModal" class="fixed inset-0 bg-black/90 backdrop-blur-sm z-[2000] hidden items-center justify-center overflow-y-auto py-8">
                 <div class="glass-card max-w-3xl w-full mx-4 p-6 max-h-[90vh] overflow-y-auto">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 id="blogModalTitle" class="text-2xl font-bold">Blog Post</h2>
-                        <button onclick="closeBlogModal()" class="text-gray-400 hover:text-white"><i class="fas fa-times text-2xl"></i></button>
+                    <div class="flex justify-between items-center mb-4"><h2 id="blogModalTitle" class="text-2xl font-bold">Blog Post</h2><button onclick="closeBlogModal()" class="text-gray-400 hover:text-white"><i class="fas fa-times text-2xl"></i></button></div>
+                    <div id="blogModalContent" class="blog-content prose prose-invert max-w-none"></div>
+                    <div class="mt-6 pt-4 border-t border-white/10"><h4 class="font-bold mb-3">Share this article:</h4><div class="flex gap-3 flex-wrap"><button onclick="shareArticle('whatsapp')" class="share-btn bg-green-600 px-4 py-2 rounded-full text-sm hover:bg-green-700"><i class="fab fa-whatsapp mr-2"></i> WhatsApp</button><button onclick="shareArticle('facebook')" class="share-btn bg-blue-600 px-4 py-2 rounded-full text-sm hover:bg-blue-700"><i class="fab fa-facebook mr-2"></i> Facebook</button><button onclick="shareArticle('twitter')" class="share-btn bg-black px-4 py-2 rounded-full text-sm hover:bg-gray-800"><i class="fab fa-twitter mr-2"></i> Twitter</button><button onclick="shareArticle('linkedin')" class="share-btn bg-blue-800 px-4 py-2 rounded-full text-sm hover:bg-blue-900"><i class="fab fa-linkedin mr-2"></i> LinkedIn</button></div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Referral Section -->
+        <div id="referralSection" class="hidden">
+            <div class="glass-card p-6 mb-6">
+                <h2 class="text-xl font-bold mb-4"><i class="fas fa-gift text-cyan-400 mr-2"></i> Referral Program</h2>
+                <p class="text-gray-400 mb-4">Invite friends and earn $10 for each friend who joins City Find!</p>
+                <div class="referral-card rounded-lg p-4 mb-4">
+                    <p class="text-sm text-gray-400 mb-2">Your Referral Link</p>
+                    <div class="flex gap-2">
+                        <input type="text" id="referralLink" class="flex-1 bg-white/10 border border-white/20 rounded-lg px-4 py-2" readonly>
+                        <button onclick="copyReferralLink()" class="bg-cyan-500 px-4 py-2 rounded-lg hover:bg-cyan-600"><i class="fas fa-copy"></i> Copy</button>
                     </div>
-                    <div id="blogModalContent" class="blog-content prose prose-invert max-w-none">
-                        <!-- Content loads here -->
+                </div>
+                <div class="referral-card rounded-lg p-4">
+                    <h3 class="font-bold mb-2">Your Referral Stats</h3>
+                    <div class="grid grid-cols-3 gap-4 text-center">
+                        <div><div class="text-2xl font-bold text-cyan-400" id="referralTotal">0</div><div class="text-xs text-gray-400">Total</div></div>
+                        <div><div class="text-2xl font-bold text-green-400" id="referralCompleted">0</div><div class="text-xs text-gray-400">Completed</div></div>
+                        <div><div class="text-2xl font-bold text-yellow-400" id="referralEarned">$0</div><div class="text-xs text-gray-400">Earned</div></div>
                     </div>
-                    <div class="mt-6 pt-4 border-t border-white/10">
-                        <h4 class="font-bold mb-3">Share this article:</h4>
-                        <div class="flex gap-3 flex-wrap">
-                            <button onclick="shareArticle('whatsapp')" class="share-btn bg-green-600 px-4 py-2 rounded-full text-sm hover:bg-green-700"><i class="fab fa-whatsapp mr-2"></i> WhatsApp</button>
-                            <button onclick="shareArticle('facebook')" class="share-btn bg-blue-600 px-4 py-2 rounded-full text-sm hover:bg-blue-700"><i class="fab fa-facebook mr-2"></i> Facebook</button>
-                            <button onclick="shareArticle('twitter')" class="share-btn bg-black px-4 py-2 rounded-full text-sm hover:bg-gray-800"><i class="fab fa-twitter mr-2"></i> Twitter</button>
-                            <button onclick="shareArticle('linkedin')" class="share-btn bg-blue-800 px-4 py-2 rounded-full text-sm hover:bg-blue-900"><i class="fab fa-linkedin mr-2"></i> LinkedIn</button>
-                        </div>
-                    </div>
+                </div>
+                <div class="mt-4">
+                    <input type="email" id="referralEmail" placeholder="Friend's email address" class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 mb-2">
+                    <button onclick="sendReferral()" class="w-full bg-gradient-to-r from-cyan-500 to-purple-600 rounded-full py-2 font-semibold"><i class="fas fa-envelope mr-2"></i> Send Invitation</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notifications Section -->
+        <div id="notificationsSection" class="hidden">
+            <div class="glass-card p-6">
+                <h2 class="text-xl font-bold mb-4"><i class="fas fa-bell text-cyan-400 mr-2"></i> Notifications</h2>
+                <div id="notificationsList" class="space-y-3 max-h-96 overflow-y-auto">
+                    <div class="text-center py-8 text-gray-400">No notifications yet</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Disputes Section -->
+        <div id="disputesSection" class="hidden">
+            <div class="glass-card p-6 mb-6">
+                <h2 class="text-xl font-bold mb-4"><i class="fas fa-gavel text-cyan-400 mr-2"></i> Raise a Dispute</h2>
+                <form id="disputeForm" class="space-y-4">
+                    <select id="disputeOrderId" class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2" required>
+                        <option value="">Select order</option>
+                    </select>
+                    <select id="disputeReason" class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2" required>
+                        <option value="Product not received">Product not received</option>
+                        <option value="Wrong product">Wrong product delivered</option>
+                        <option value="Damaged product">Damaged product</option>
+                        <option value="Quality mismatch">Quality mismatch</option>
+                        <option value="Delivery delay">Excessive delivery delay</option>
+                        <option value="Other">Other</option>
+                    </select>
+                    <textarea id="disputeDescription" placeholder="Describe the issue in detail..." rows="4" class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2" required></textarea>
+                    <input type="file" id="disputeEvidence" accept="image/*,video/*" multiple class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2">
+                    <button type="submit" class="w-full bg-red-600 rounded-full py-2 font-semibold hover:bg-red-700"><i class="fas fa-gavel mr-2"></i> Submit Dispute</button>
+                </form>
+            </div>
+            <div class="glass-card p-6">
+                <h2 class="text-xl font-bold mb-4"><i class="fas fa-history text-cyan-400 mr-2"></i> My Disputes</h2>
+                <div id="myDisputesList" class="space-y-3 max-h-96 overflow-y-auto">
+                    <div class="text-center py-8 text-gray-400">No disputes filed</div>
                 </div>
             </div>
         </div>
 
         <!-- Dashboard Section -->
         <div id="dashboardSection" class="hidden">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
                 <div class="glass-card p-6 text-center"><i class="fas fa-chart-line text-3xl text-cyan-400 mb-2"></i><div class="text-2xl font-bold" id="statAds">0</div><div class="text-gray-400">Active Ads</div></div>
                 <div class="glass-card p-6 text-center"><i class="fas fa-shopping-cart text-3xl text-purple-400 mb-2"></i><div class="text-2xl font-bold" id="statOrders">0</div><div class="text-gray-400">Total Orders</div></div>
                 <div class="glass-card p-6 text-center"><i class="fas fa-dollar-sign text-3xl text-green-400 mb-2"></i><div class="text-2xl font-bold" id="statRevenue">$0</div><div class="text-gray-400">Revenue</div></div>
                 <div class="glass-card p-6 text-center"><i class="fas fa-star text-3xl text-yellow-400 mb-2"></i><div class="text-2xl font-bold" id="statRating">0</div><div class="text-gray-400">Rating</div></div>
+                <div class="glass-card p-6 text-center"><i class="fas fa-gift text-3xl text-pink-400 mb-2"></i><div class="text-2xl font-bold" id="statReferrals">0</div><div class="text-gray-400">Referrals</div></div>
             </div>
             
-            <!-- Social Media Sharing Section -->
             <div class="glass-card p-6 mb-6">
                 <h3 class="text-xl font-bold mb-4"><i class="fas fa-share-alt text-cyan-400 mr-2"></i> Share City Find</h3>
                 <p class="text-gray-400 text-sm mb-4">Help us grow by sharing our platform with your network!</p>
@@ -400,7 +458,6 @@
                 </div>
             </div>
             
-            <!-- Create Ad Form -->
             <div class="glass-card p-6 mb-6">
                 <h3 class="text-xl font-bold mb-4"><i class="fas fa-plus-circle text-cyan-400 mr-2"></i> Create New Ad</h3>
                 <form id="createAdForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -419,7 +476,6 @@
                 </form>
             </div>
             
-            <!-- Payment Section -->
             <div id="paymentSection" class="glass-card p-6 mb-6">
                 <h2 class="text-xl font-bold mb-4"><i class="fas fa-credit-card text-cyan-400 mr-2"></i> 💰 Payment / Upload Screenshot</h2>
                 <div id="freeTierInfo"></div>
@@ -433,13 +489,10 @@
                 <div id="paymentStatus" class="mt-4"></div>
             </div>
             
-            <!-- Rating Section -->
             <div class="glass-card p-6 mb-6">
                 <h3 class="text-xl font-bold mb-4"><i class="fas fa-star text-yellow-400 mr-2"></i> Rate Company</h3>
                 <div id="ratingCompanySelect" class="mb-3">
-                    <select id="rateCompanyId" class="bg-white/10 border border-white/20 rounded-lg px-4 py-2 w-full">
-                        <option value="">Select company to rate</option>
-                    </select>
+                    <select id="rateCompanyId" class="bg-white/10 border border-white/20 rounded-lg px-4 py-2 w-full"><option value="">Select company to rate</option></select>
                 </div>
                 <div class="rating-stars text-center mb-3" id="ratingStars">
                     <i class="far fa-star text-3xl mx-1" data-rating="1"></i>
@@ -452,7 +505,6 @@
                 <button onclick="submitRating()" class="w-full bg-yellow-600 rounded-full py-2 hover:bg-yellow-700"><i class="fas fa-star"></i> Submit Rating</button>
             </div>
             
-            <!-- My Ads List -->
             <div class="glass-card p-6">
                 <h3 class="text-xl font-bold mb-4"><i class="fas fa-list text-cyan-400 mr-2"></i> My Ads</h3>
                 <div id="myAdsList" class="space-y-3"><p class="text-gray-400">No ads yet. Create your first ad above!</p></div>
@@ -462,14 +514,8 @@
 
     <!-- PWA Install Banner -->
     <div id="installBanner" style="position: fixed; bottom: 20px; left: 20px; right: 20px; background: linear-gradient(135deg, #00f2fe, #9b51e0); border-radius: 16px; padding: 16px; display: none; align-items: center; justify-content: space-between; z-index: 1001; box-shadow: 0 10px 40px rgba(0,0,0,0.3);" class="install-banner">
-        <div>
-            <strong><i class="fas fa-download"></i> Install City Find App</strong>
-            <p style="font-size: 12px; margin-top: 4px;">Install on your device for faster access</p>
-        </div>
-        <div>
-            <button id="installBtn" style="background: white; color: #9b51e0; border: none; padding: 10px 20px; border-radius: 30px; font-weight: bold; cursor: pointer;">Install</button>
-            <button id="closeInstall" style="background: transparent; border: none; color: white; font-size: 20px; cursor: pointer; margin-left: 10px;"><i class="fas fa-times"></i></button>
-        </div>
+        <div><strong><i class="fas fa-download"></i> Install City Find App</strong><p style="font-size: 12px; margin-top: 4px;">Install on your device for faster access</p></div>
+        <div><button id="installBtn" style="background: white; color: #9b51e0; border: none; padding: 10px 20px; border-radius: 30px; font-weight: bold; cursor: pointer;">Install</button><button id="closeInstall" style="background: transparent; border: none; color: white; font-size: 20px; cursor: pointer; margin-left: 10px;"><i class="fas fa-times"></i></button></div>
     </div>
 
     <!-- Notification Container -->
@@ -478,86 +524,46 @@
     <!-- Video Call Modal -->
     <div id="videoCallModal" class="fixed inset-0 bg-black/90 z-[2000] hidden items-center justify-center">
         <div class="bg-gray-900 rounded-2xl p-4 max-w-lg w-full mx-4">
-            <div class="flex justify-between mb-3">
-                <h3 class="text-lg font-bold">Video Call</h3>
-                <button onclick="closeVideoCall()" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="video-container">
-                <video id="remoteVideo" autoplay playsinline class="w-full rounded-lg mb-2 bg-black"></video>
-                <video id="localVideo" autoplay playsinline muted class="w-24 h-24 absolute bottom-2 right-2 rounded-lg border-2 border-cyan-400 bg-black"></video>
-            </div>
-            <div class="flex justify-center gap-4 mt-4">
-                <button onclick="toggleMute()" class="bg-gray-700 w-12 h-12 rounded-full"><i class="fas fa-microphone"></i></button>
-                <button onclick="toggleVideo()" class="bg-gray-700 w-12 h-12 rounded-full"><i class="fas fa-video"></i></button>
-                <button onclick="endCall()" class="bg-red-600 w-12 h-12 rounded-full"><i class="fas fa-phone-slash"></i></button>
-            </div>
+            <div class="flex justify-between mb-3"><h3 class="text-lg font-bold">Video Call</h3><button onclick="closeVideoCall()" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button></div>
+            <div class="video-container"><video id="remoteVideo" autoplay playsinline class="w-full rounded-lg mb-2 bg-black"></video><video id="localVideo" autoplay playsinline muted class="w-24 h-24 absolute bottom-2 right-2 rounded-lg border-2 border-cyan-400 bg-black"></video></div>
+            <div class="flex justify-center gap-4 mt-4"><button onclick="toggleMute()" class="bg-gray-700 w-12 h-12 rounded-full"><i class="fas fa-microphone"></i></button><button onclick="toggleVideo()" class="bg-gray-700 w-12 h-12 rounded-full"><i class="fas fa-video"></i></button><button onclick="endCall()" class="bg-red-600 w-12 h-12 rounded-full"><i class="fas fa-phone-slash"></i></button></div>
+        </div>
+    </div>
+
+    <!-- Screen Share Modal -->
+    <div id="screenShareModal" class="fixed inset-0 bg-black/90 z-[2100] hidden items-center justify-center">
+        <div class="bg-gray-900 rounded-2xl p-4 max-w-4xl w-full mx-4">
+            <div class="flex justify-between items-center mb-3"><h3 class="text-lg font-bold"><i class="fas fa-desktop text-cyan-400 mr-2"></i> Screen Sharing</h3><button onclick="stopScreenShare()" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button></div>
+            <video id="screenVideo" autoplay playsinline class="w-full rounded-lg bg-black"></video>
+            <div class="flex justify-center gap-4 mt-4"><button id="stopScreenShareBtn" class="bg-red-600 px-6 py-2 rounded-full hover:bg-red-700"><i class="fas fa-stop"></i> Stop Sharing</button></div>
         </div>
     </div>
 
     <!-- Chat Bot -->
-<!-- Chat Bot -->
-<button id="chatToggle" class="fixed bottom-6 right-6 bg-gradient-to-r from-cyan-500 to-purple-600 w-14 h-14 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition z-50">
-    <i class="fas fa-robot text-white text-2xl"></i>
-</button>
-
-<div id="chatBot" class="chat-bot" style="display: none;">
-    <div class="bg-gradient-to-r from-cyan-600 to-purple-600 p-4 rounded-t-2xl flex justify-between items-center">
-        <span><i class="fas fa-robot mr-2"></i> <span data-key="bot_title">AI Business Assistant</span></span>
-        <div class="flex gap-2">
-            <button id="voiceCallBtn" class="text-white/80 hover:text-white transition" title="Voice Call">
-                <i class="fas fa-phone-alt"></i>
-            </button>
-            <button id="screenShareBtn" class="text-white/80 hover:text-white transition" title="Share Screen">
-                <i class="fas fa-desktop"></i>
-            </button>
-            <button id="chatMinimize" class="text-white/80 hover:text-white">
-                <i class="fas fa-minus"></i>
-            </button>
-            <button id="chatClose" class="text-white/80 hover:text-white">
-                <i class="fas fa-times"></i>
-            </button>
+    <button id="chatToggle" class="fixed bottom-6 right-6 bg-gradient-to-r from-cyan-500 to-purple-600 w-14 h-14 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition z-50">
+        <i class="fas fa-robot text-white text-2xl"></i>
+    </button>
+    <div id="chatBot" class="chat-bot" style="display: none;">
+        <div class="bg-gradient-to-r from-cyan-600 to-purple-600 p-4 rounded-t-2xl flex justify-between items-center">
+            <span><i class="fas fa-robot mr-2"></i> <span data-key="bot_title">AI Business Assistant</span></span>
+            <div class="flex gap-2">
+                <button id="voiceCallBtn" class="text-white/80 hover:text-white transition" title="Voice Call"><i class="fas fa-phone-alt"></i></button>
+                <button id="screenShareBtn" class="text-white/80 hover:text-white transition" title="Share Screen"><i class="fas fa-desktop"></i></button>
+                <button id="chatMinimize" class="text-white/80 hover:text-white"><i class="fas fa-minus"></i></button>
+                <button id="chatClose" class="text-white/80 hover:text-white"><i class="fas fa-times"></i></button>
+            </div>
         </div>
-    </div>
-    <div id="chatMessages" class="chat-messages">
-        <div class="message-bot">
-            <i class="fas fa-robot mr-2"></i> Hello! I'm City Find AI Assistant. How can I help you today?<br>
-            <span class="text-xs text-cyan-300">Ask about ads, orders, payments, or tracking! Click the mic to speak 🎤</span>
+        <div id="chatMessages" class="chat-messages">
+            <div class="message-bot"><i class="fas fa-robot mr-2"></i> Hello! I'm City Find AI Assistant. How can I help you today?<br><span class="text-xs text-cyan-300">Ask about ads, orders, payments, or tracking! Click the mic to speak 🎤</span></div>
         </div>
-    </div>
-    <div class="p-3 border-t border-gray-700 flex gap-2 bg-black/30">
-        <button id="voiceRecordBtn" class="bg-purple-600 w-10 h-10 rounded-full hover:bg-purple-700 transition" title="Voice Message">
-            <i class="fas fa-microphone"></i>
-        </button>
-        <button id="speechToTextBtn" class="bg-green-600 w-10 h-10 rounded-full hover:bg-green-700 transition" title="Speech to Text">
-            <i class="fas fa-microphone-alt"></i>
-        </button>
-        <input type="text" id="chatInput" placeholder="Type your message..." class="flex-1 bg-white/10 rounded-full px-4 py-2 outline-none focus:border-cyan-400 border border-transparent focus:border-cyan-400">
-        <button id="chatSend" class="bg-cyan-500 w-10 h-10 rounded-full hover:bg-cyan-600 transition">
-            <i class="fas fa-paper-plane"></i>
-        </button>
-    </div>
-    <div class="p-2 border-t border-gray-700 text-center text-xs text-gray-500">
-        <span id="voiceStatus"></span>
-    </div>
-</div>
-
-<!-- Screen Share Modal -->
-<div id="screenShareModal" class="fixed inset-0 bg-black/90 z-[2100] hidden items-center justify-center">
-    <div class="bg-gray-900 rounded-2xl p-4 max-w-4xl w-full mx-4">
-        <div class="flex justify-between items-center mb-3">
-            <h3 class="text-lg font-bold"><i class="fas fa-desktop text-cyan-400 mr-2"></i> Screen Sharing</h3>
-            <button onclick="stopScreenShare()" class="text-gray-400 hover:text-white">
-                <i class="fas fa-times"></i>
-            </button>
+        <div class="p-3 border-t border-gray-700 flex gap-2 bg-black/30">
+            <button id="voiceRecordBtn" class="bg-purple-600 w-10 h-10 rounded-full hover:bg-purple-700 transition" title="Voice Message"><i class="fas fa-microphone"></i></button>
+            <button id="speechToTextBtn" class="bg-green-600 w-10 h-10 rounded-full hover:bg-green-700 transition" title="Speech to Text"><i class="fas fa-microphone-alt"></i></button>
+            <input type="text" id="chatInput" placeholder="Type your message..." class="flex-1 bg-white/10 rounded-full px-4 py-2 outline-none focus:border-cyan-400 border border-transparent focus:border-cyan-400">
+            <button id="chatSend" class="bg-cyan-500 w-10 h-10 rounded-full hover:bg-cyan-600 transition"><i class="fas fa-paper-plane"></i></button>
         </div>
-        <video id="screenVideo" autoplay playsinline class="w-full rounded-lg bg-black"></video>
-        <div class="flex justify-center gap-4 mt-4">
-            <button id="stopScreenShareBtn" class="bg-red-600 px-6 py-2 rounded-full hover:bg-red-700">
-                <i class="fas fa-stop"></i> Stop Sharing
-            </button>
-        </div>
+        <div class="p-2 border-t border-gray-700 text-center text-xs text-gray-500"><span id="voiceStatus"></span></div>
     </div>
-</div>
 
     <!-- Auth Modal -->
     <div id="authModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 hidden">
@@ -590,578 +596,158 @@
         let map, marker, watchId;
         let localStream, peerConnection;
         let deferredPrompt;
+        let recognition = null;
+        let isListening = false;
+        let mediaRecorder, audioChunks;
+        let screenStream = null;
+        let voiceCallStream = null;
+        let isVoiceCallActive = false;
         
         // PWA Install Prompt
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            const banner = document.getElementById('installBanner');
-            if (banner) banner.style.display = 'flex';
-        });
-        
+        window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; const banner = document.getElementById('installBanner'); if (banner) banner.style.display = 'flex'; });
         const installBtn = document.getElementById('installBtn');
         const closeInstall = document.getElementById('closeInstall');
+        if (installBtn) installBtn.addEventListener('click', async () => { if (deferredPrompt) { deferredPrompt.prompt(); const { outcome } = await deferredPrompt.userChoice; console.log(`User ${outcome} the installation`); deferredPrompt = null; const banner = document.getElementById('installBanner'); if (banner) banner.style.display = 'none'; } });
+        if (closeInstall) closeInstall.addEventListener('click', () => { const banner = document.getElementById('installBanner'); if (banner) banner.style.display = 'none'; });
         
-        if (installBtn) {
-            installBtn.addEventListener('click', async () => {
-                if (deferredPrompt) {
-                    deferredPrompt.prompt();
-                    const { outcome } = await deferredPrompt.userChoice;
-                    console.log(`User ${outcome} the installation`);
-                    deferredPrompt = null;
-                    const banner = document.getElementById('installBanner');
-                    if (banner) banner.style.display = 'none';
-                }
-            });
-        }
-        
-        if (closeInstall) {
-            closeInstall.addEventListener('click', () => {
-                const banner = document.getElementById('installBanner');
-                if (banner) banner.style.display = 'none';
-            });
-        }
-        
-        // Configuration for WebRTC
         const configuration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
         
         // Blog content
         const blogPosts = {
-            1: {
-                title: "How to Advertise Your Business Online",
-                date: "May 25, 2026",
-                content: `
-                    <h2>Introduction to Online Advertising</h2>
-                    <p>In today's digital world, online advertising is essential for any business looking to grow. With City Find, you can reach customers across Tanzania and globally.</p>
-                    
-                    <h3>Why Advertise with City Find?</h3>
-                    <ul>
-                        <li><strong>Affordable Pricing</strong> - Starting from just $100/month</li>
-                        <li><strong>Global Reach</strong> - Connect with international customers</li>
-                        <li><strong>Secure Payments</strong> - NMB Bank: 5161480052318274</li>
-                        <li><strong>24/7 Support</strong> - WhatsApp: +255796323348</li>
-                    </ul>
-                    
-                    <h3>Our Advertising Packages</h3>
-                    <ul>
-                        <li><strong>Banner Ads ($100/month)</strong> - Perfect for small businesses starting out</li>
-                        <li><strong>Featured Ads ($500/month)</strong> - Get premium visibility on our homepage</li>
-                        <li><strong>Sponsored Ads ($1,000/month)</strong> - Maximum exposure across all platforms</li>
-                    </ul>
-                    
-                    <h3>Tips for Success</h3>
-                    <ol>
-                        <li>Use high-quality images and videos</li>
-                        <li>Write clear, compelling descriptions</li>
-                        <li>Respond quickly to customer inquiries via WhatsApp</li>
-                        <li>Maintain good ratings by providing quality products</li>
-                    </ol>
-                    
-                    <p>Ready to start? <a href="#" onclick="showAuthModal('register')" class="text-cyan-400">Register now</a> and get your first month FREE!</p>
-                `
-            },
-            2: {
-                title: "Delivery Tracking Tips for Business",
-                date: "May 24, 2026",
-                content: `
-                    <h2>Ensuring Safe and Timely Deliveries</h2>
-                    <p>Delivery tracking is crucial for customer satisfaction. City Find provides real-time GPS tracking for all orders.</p>
-                    
-                    <h3>How Our Delivery System Works</h3>
-                    <ol>
-                        <li><strong>Order Created</strong> - Customer places order</li>
-                        <li><strong>QR/Barcode Scan</strong> - Provider scans product</li>
-                        <li><strong>In Transit</strong> - Real-time GPS tracking</li>
-                        <li><strong>Quality Check</strong> - Customer verifies product</li>
-                        <li><strong>Payment Released</strong> - Funds transferred to seller</li>
-                    </ol>
-                    
-                    <h3>Benefits of GPS Tracking</h3>
-                    <ul>
-                        <li>Customers know exactly where their order is</li>
-                        <li>Reduces "where is my order?" inquiries</li>
-                        <li>Builds trust and reliability</li>
-                        <li>Helps optimize delivery routes</li>
-                    </ul>
-                    
-                    <h3>Delivery Fees</h3>
-                    <p>Delivery fees start at $10 base + $0.50 per km. All payments are held in escrow until quality check is complete.</p>
-                    
-                    <h3>Contact Support</h3>
-                    <p>For delivery issues, contact us on WhatsApp: <strong>+255796323348</strong> or email: <strong>citytechuk@gmail.com</strong></p>
-                `
-            },
-            3: {
-                title: "Quality Check: Why It Matters",
-                date: "May 23, 2026",
-                content: `
-                    <h2>Building Trust Through Quality Verification</h2>
-                    <p>Quality checks protect both buyers and sellers. Our video verification system ensures transparency in every transaction.</p>
-                    
-                    <h3>The Quality Check Process</h3>
-                    <ol>
-                        <li>Customer receives the product</li>
-                        <li>Records a 10-20 second video showing the product</li>
-                        <li>Takes 2-3 clear photos</li>
-                        <li>Uploads media to City Find platform</li>
-                        <li>System verifies quality against specifications</li>
-                        <li>If quality matches → payment released to seller</li>
-                        <li>If issues found → refund processed within 3 days</li>
-                    </ol>
-                    
-                    <h3>Refund Policy</h3>
-                    <p>If the product doesn't match the quality specifications, the customer receives a FULL refund. Refunds are processed within 1-3 business days via:</p>
-                    <ul>
-                        <li>M-Pesa</li>
-                        <li>Tigo Pesa</li>
-                        <li>Airtel Money</li>
-                        <li>Bank Transfer (NMB)</li>
-                    </ul>
-                    
-                    <h3>Why Quality Checks Benefit Your Business</h3>
-                    <ul>
-                        <li>Builds customer trust and loyalty</li>
-                        <li>Reduces disputes and chargebacks</li>
-                        <li>Improves seller ratings and reputation</li>
-                        <li>Attracts more customers to your ads</li>
-                    </ul>
-                    
-                    <p>Have questions? Contact us on WhatsApp: <strong>+255796323348</strong></p>
-                `
-            }
+            1: { title: "How to Advertise Your Business Online", date: "May 25, 2026", content: `<h2>Introduction to Online Advertising</h2><p>In today's digital world, online advertising is essential for any business looking to grow. With City Find, you can reach customers across Tanzania and globally.</p><h3>Why Advertise with City Find?</h3><ul><li><strong>Affordable Pricing</strong> - Starting from just $100/month</li><li><strong>Global Reach</strong> - Connect with international customers</li><li><strong>Secure Payments</strong> - NMB Bank: 5161480052318274</li><li><strong>24/7 Support</strong> - WhatsApp: +255796323348</li></ul><h3>Our Advertising Packages</h3><ul><li><strong>Banner Ads ($100/month)</strong> - Perfect for small businesses starting out</li><li><strong>Featured Ads ($500/month)</strong> - Get premium visibility on our homepage</li><li><strong>Sponsored Ads ($1,000/month)</strong> - Maximum exposure across all platforms</li></ul><h3>Tips for Success</h3><ol><li>Use high-quality images and videos</li><li>Write clear, compelling descriptions</li><li>Respond quickly to customer inquiries via WhatsApp</li><li>Maintain good ratings by providing quality products</li></ol><p>Ready to start? <a href="#" onclick="showAuthModal('register')" class="text-cyan-400">Register now</a> and get your first month FREE!</p>` },
+            2: { title: "Delivery Tracking Tips for Business", date: "May 24, 2026", content: `<h2>Ensuring Safe and Timely Deliveries</h2><p>Delivery tracking is crucial for customer satisfaction. City Find provides real-time GPS tracking for all orders.</p><h3>How Our Delivery System Works</h3><ol><li><strong>Order Created</strong> - Customer places order</li><li><strong>QR/Barcode Scan</strong> - Provider scans product</li><li><strong>In Transit</strong> - Real-time GPS tracking</li><li><strong>Quality Check</strong> - Customer verifies product</li><li><strong>Payment Released</strong> - Funds transferred to seller</li></ol><h3>Benefits of GPS Tracking</h3><ul><li>Customers know exactly where their order is</li><li>Reduces "where is my order?" inquiries</li><li>Builds trust and reliability</li><li>Helps optimize delivery routes</li></ul><h3>Delivery Fees</h3><p>Delivery fees start at $10 base + $0.50 per km. All payments are held in escrow until quality check is complete.</p><h3>Contact Support</h3><p>For delivery issues, contact us on WhatsApp: <strong>+255796323348</strong> or email: <strong>citytechuk@gmail.com</strong></p>` },
+            3: { title: "Quality Check: Why It Matters", date: "May 23, 2026", content: `<h2>Building Trust Through Quality Verification</h2><p>Quality checks protect both buyers and sellers. Our video verification system ensures transparency in every transaction.</p><h3>The Quality Check Process</h3><ol><li>Customer receives the product</li><li>Records a 10-20 second video showing the product</li><li>Takes 2-3 clear photos</li><li>Uploads media to City Find platform</li><li>System verifies quality against specifications</li><li>If quality matches → payment released to seller</li><li>If issues found → refund processed within 3 days</li></ol><h3>Refund Policy</h3><p>If the product doesn't match the quality specifications, the customer receives a FULL refund. Refunds are processed within 1-3 business days via: M-Pesa, Tigo Pesa, Airtel Money, Bank Transfer (NMB)</p><h3>Why Quality Checks Benefit Your Business</h3><ul><li>Builds customer trust and loyalty</li><li>Reduces disputes and chargebacks</li><li>Improves seller ratings and reputation</li><li>Attracts more customers to your ads</li></ul><p>Have questions? Contact us on WhatsApp: <strong>+255796323348</strong></p>` }
         };
         
-        // Translations
         const translations = {
             en: { nav_ads: "Ads", nav_tracking: "Track", nav_orders: "Orders", nav_dashboard: "Dashboard", login: "Login", register: "Register", bot_title: "AI Business Assistant" },
             sw: { nav_ads: "Matangazo", nav_tracking: "Fuatilia", nav_orders: "Maagizo", nav_dashboard: "Dashibodi", login: "Ingia", register: "Jisajili", bot_title: "Msaidizi wa Biashara" },
             fr: { nav_ads: "Annonces", nav_tracking: "Suivre", nav_orders: "Commandes", nav_dashboard: "Tableau", login: "Connexion", register: "S'inscrire", bot_title: "Assistant Commercial" }
         };
         
-        function updateLanguage() {
-            const lang = currentLanguage;
-            document.querySelectorAll('[data-key]').forEach(el => {
-                const key = el.getAttribute('data-key');
-                if (translations[lang] && translations[lang][key]) {
-                    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') el.placeholder = translations[lang][key];
-                    else el.textContent = translations[lang][key];
-                }
-            });
-        }
-        
+        function updateLanguage() { const lang = currentLanguage; document.querySelectorAll('[data-key]').forEach(el => { const key = el.getAttribute('data-key'); if (translations[lang] && translations[lang][key]) { if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') el.placeholder = translations[lang][key]; else el.textContent = translations[lang][key]; } }); }
         document.getElementById('languageSelect').addEventListener('change', (e) => { currentLanguage = e.target.value; updateLanguage(); });
         
-        // Stars background
         function createStars() { for (let i = 0; i < 200; i++) { const star = document.createElement('div'); star.classList.add('star'); star.style.width = Math.random() * 3 + 'px'; star.style.height = star.style.width; star.style.left = Math.random() * 100 + '%'; star.style.top = Math.random() * 100 + '%'; star.style.animationDelay = Math.random() * 5 + 's'; star.style.opacity = Math.random() * 0.7 + 0.1; document.body.appendChild(star); } }
         createStars();
         
-        // Notification function
-        function showNotification(title, message, type = 'info') {
-            const container = document.getElementById('notificationContainer');
-            const colors = { success: 'bg-green-500', error: 'bg-red-500', info: 'bg-cyan-500', warning: 'bg-yellow-500' };
-            const notification = document.createElement('div');
-            notification.className = `glass-card ${colors[type]} p-4 mb-2 min-w-[300px] animate-slide-in`;
-            notification.innerHTML = `<strong>${title}</strong><p class="text-sm mt-1">${message}</p>`;
-            container.appendChild(notification);
-            setTimeout(() => notification.remove(), 5000);
-        }
+        function showNotification(title, message, type = 'info') { const container = document.getElementById('notificationContainer'); const colors = { success: 'bg-green-500', error: 'bg-red-500', info: 'bg-cyan-500', warning: 'bg-yellow-500' }; const notification = document.createElement('div'); notification.className = `glass-card ${colors[type]} p-4 mb-2 min-w-[300px] animate-slide-in`; notification.innerHTML = `<strong>${title}</strong><p class="text-sm mt-1">${message}</p>`; container.appendChild(notification); setTimeout(() => notification.remove(), 5000); }
         
-        // Social media sharing functions
-        function shareOn(platform) {
-            const url = encodeURIComponent('https://cityfind.zass.website');
-            const text = encodeURIComponent('🚀 Advertise your business with City Find! Global Business Platform with delivery tracking, quality checks, and secure payments. Starting from $100/month. WhatsApp: +255796323348');
-            
-            const shareUrls = {
-                whatsapp: `https://wa.me/?text=${text}%20${url}`,
-                facebook: `https://www.facebook.com/sharer/sharer.php?u=${url}`,
-                twitter: `https://twitter.com/intent/tweet?text=${text}&url=${url}`,
-                linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${url}`
-            };
-            
-            if (platform === 'instagram') {
-                navigator.clipboard.writeText(`https://cityfind.zass.website\n\n${decodeURIComponent(text)}`);
-                alert('✅ Link copied! You can now paste it on Instagram.');
-            } else if (shareUrls[platform]) {
-                window.open(shareUrls[platform], '_blank');
-            }
-        }
+        function shareOn(platform) { const url = encodeURIComponent('https://cityfind.zass.website'); const text = encodeURIComponent('🚀 Advertise your business with City Find! Global Business Platform with delivery tracking, quality checks, and secure payments. Starting from $100/month. WhatsApp: +255796323348'); const shareUrls = { whatsapp: `https://wa.me/?text=${text}%20${url}`, facebook: `https://www.facebook.com/sharer/sharer.php?u=${url}`, twitter: `https://twitter.com/intent/tweet?text=${text}&url=${url}`, linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${url}` }; if (platform === 'instagram') { navigator.clipboard.writeText(`https://cityfind.zass.website\n\n${decodeURIComponent(text)}`); alert('✅ Link copied! You can now paste it on Instagram.'); } else if (shareUrls[platform]) { window.open(shareUrls[platform], '_blank'); } }
         
-        function shareArticle(platform) {
-            const url = encodeURIComponent(window.location.href);
-            const title = encodeURIComponent(document.getElementById('blogModalTitle').textContent);
-            
-            const shareUrls = {
-                whatsapp: `https://wa.me/?text=${title}%20${url}`,
-                facebook: `https://www.facebook.com/sharer/sharer.php?u=${url}`,
-                twitter: `https://twitter.com/intent/tweet?text=${title}&url=${url}`,
-                linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${url}`
-            };
-            
-            if (shareUrls[platform]) {
-                window.open(shareUrls[platform], '_blank');
-            }
-        }
+        function shareArticle(platform) { const url = encodeURIComponent(window.location.href); const title = encodeURIComponent(document.getElementById('blogModalTitle').textContent); const shareUrls = { whatsapp: `https://wa.me/?text=${title}%20${url}`, facebook: `https://www.facebook.com/sharer/sharer.php?u=${url}`, twitter: `https://twitter.com/intent/tweet?text=${title}&url=${url}`, linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${url}` }; if (shareUrls[platform]) window.open(shareUrls[platform], '_blank'); }
         
-        // Blog functions
-        function openBlogPost(postId) {
-            const post = blogPosts[postId];
-            if (post) {
-                document.getElementById('blogModalTitle').textContent = post.title;
-                document.getElementById('blogModalContent').innerHTML = `
-                    <div class="text-sm text-gray-400 mb-4"><i class="far fa-calendar-alt mr-1"></i> ${post.date}</div>
-                    ${post.content}
-                `;
-                document.getElementById('blogModal').classList.remove('hidden');
-                document.getElementById('blogModal').style.display = 'flex';
-            }
-        }
+        function openBlogPost(postId) { const post = blogPosts[postId]; if (post) { document.getElementById('blogModalTitle').textContent = post.title; document.getElementById('blogModalContent').innerHTML = `<div class="text-sm text-gray-400 mb-4"><i class="far fa-calendar-alt mr-1"></i> ${post.date}</div>${post.content}`; document.getElementById('blogModal').classList.remove('hidden'); document.getElementById('blogModal').style.display = 'flex'; } }
+        function closeBlogModal() { document.getElementById('blogModal').classList.add('hidden'); document.getElementById('blogModal').style.display = 'none'; }
         
-        function closeBlogModal() {
-            document.getElementById('blogModal').classList.add('hidden');
-            document.getElementById('blogModal').style.display = 'none';
-        }
+        async function loadAds() { try { const categoryParam = currentCategory !== 'all' ? `?category=${currentCategory}` : ''; const res = await fetch(`/api/ads${categoryParam}`); const ads = await res.json(); const grid = document.getElementById('adsGrid'); if (ads.length === 0) { grid.innerHTML = `<div class="col-span-full text-center py-12 text-gray-400"><i class="fas fa-newspaper text-5xl mb-3 block"></i><p>No ads found.</p></div>`; return; } grid.innerHTML = ads.map(ad => `<div class="ad-card rounded-xl overflow-hidden ${getGalaxyClass(ad.galaxyAnimation)}">${ad.mediaType === 'video' ? `<video src="${ad.mediaUrls[0]}" class="w-full h-48 object-cover" autoplay muted loop></video>` : ad.mediaType === 'animation' ? `<div class="w-full h-48 flex items-center justify-center bg-gradient-to-r from-cyan-500/20 to-purple-500/20"><i class="fas fa-film text-5xl text-cyan-400"></i></div>` : `<img src="${ad.mediaUrls[0] || 'https://placehold.co/400x300/0a0f2a/00f2fe?text=City+Find'}" class="w-full h-48 object-cover">`}<div class="p-4"><div class="flex items-center gap-2 mb-2"><span class="text-xs px-2 py-1 bg-cyan-500/30 rounded-full">${ad.adType}</span><span class="text-xs px-2 py-1 bg-purple-500/30 rounded-full">${ad.category}</span></div><h3 class="font-bold text-lg">${ad.title}</h3><p class="text-gray-300 text-sm mt-1">${ad.description}</p><div class="flex justify-between items-center mt-3"><div><span class="text-cyan-400 font-bold">${ad.currency} ${ad.price}</span>${ad.companyId?.rating ? `<span class="text-yellow-400 text-sm ml-2"><i class="fas fa-star"></i> ${ad.companyId.rating.toFixed(1)}</span>` : ''}</div><button onclick="contactBusiness('${ad.companyId?._id}')" class="bg-cyan-500 px-3 py-1 rounded-full text-sm hover:bg-cyan-600 transition"><i class="fab fa-whatsapp"></i> Contact</button></div></div></div>`).join(''); } catch (error) { console.error('Error loading ads:', error); } }
         
-        // Load ads
-        async function loadAds() {
-            try {
-                const categoryParam = currentCategory !== 'all' ? `?category=${currentCategory}` : '';
-                const res = await fetch(`/api/ads${categoryParam}`);
-                const ads = await res.json();
-                const grid = document.getElementById('adsGrid');
-                if (ads.length === 0) { grid.innerHTML = `<div class="col-span-full text-center py-12 text-gray-400"><i class="fas fa-newspaper text-5xl mb-3 block"></i><p>No ads found.</p></div>`; return; }
-                grid.innerHTML = ads.map(ad => `<div class="ad-card rounded-xl overflow-hidden ${getGalaxyClass(ad.galaxyAnimation)}">${ad.mediaType === 'video' ? `<video src="${ad.mediaUrls[0]}" class="w-full h-48 object-cover" autoplay muted loop></video>` : ad.mediaType === 'animation' ? `<div class="w-full h-48 flex items-center justify-center bg-gradient-to-r from-cyan-500/20 to-purple-500/20"><i class="fas fa-film text-5xl text-cyan-400"></i></div>` : `<img src="${ad.mediaUrls[0] || 'https://placehold.co/400x300/0a0f2a/00f2fe?text=City+Find'}" class="w-full h-48 object-cover">`}<div class="p-4"><div class="flex items-center gap-2 mb-2"><span class="text-xs px-2 py-1 bg-cyan-500/30 rounded-full">${ad.adType}</span><span class="text-xs px-2 py-1 bg-purple-500/30 rounded-full">${ad.category}</span></div><h3 class="font-bold text-lg">${ad.title}</h3><p class="text-gray-300 text-sm mt-1">${ad.description}</p><div class="flex justify-between items-center mt-3"><div><span class="text-cyan-400 font-bold">${ad.currency} ${ad.price}</span>${ad.companyId?.rating ? `<span class="text-yellow-400 text-sm ml-2"><i class="fas fa-star"></i> ${ad.companyId.rating.toFixed(1)}</span>` : ''}</div><button onclick="contactBusiness('${ad.companyId?._id}')" class="bg-cyan-500 px-3 py-1 rounded-full text-sm hover:bg-cyan-600 transition"><i class="fab fa-whatsapp"></i> Contact</button></div></div></div>`).join('');
-            } catch (error) { console.error('Error loading ads:', error); }
-        }
-        
-        function getGalaxyClass(animation) {
-            const map = { 'spiral_galaxy': 'galaxy-spiral', 'exploding_stars': 'galaxy-explode', 'nebula_cloud': 'galaxy-nebula', 'black_hole_pulse': 'galaxy-blackhole' };
-            return map[animation] || 'galaxy-spiral';
-        }
-        
+        function getGalaxyClass(animation) { const map = { 'spiral_galaxy': 'galaxy-spiral', 'exploding_stars': 'galaxy-explode', 'nebula_cloud': 'galaxy-nebula', 'black_hole_pulse': 'galaxy-blackhole' }; return map[animation] || 'galaxy-spiral'; }
         function filterAds(category) { currentCategory = category; document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active')); document.querySelector(`.category-btn[data-cat="${category}"]`).classList.add('active'); loadAds(); }
-        
         document.getElementById('searchAds')?.addEventListener('input', async (e) => { const search = e.target.value; if (search.length < 2) return loadAds(); const res = await fetch(`/api/ads?search=${search}`); const ads = await res.json(); });
         
-        function showSection(section) {
-            document.getElementById('adsSection')?.classList.add('hidden');
-            document.getElementById('trackingSection')?.classList.add('hidden');
-            document.getElementById('ordersSection')?.classList.add('hidden');
-            document.getElementById('dashboardSection')?.classList.add('hidden');
-            document.getElementById('deliverySection')?.classList.add('hidden');
-            document.getElementById('blogSection')?.classList.add('hidden');
-            document.getElementById(`${section}Section`)?.classList.remove('hidden');
-            ['navAds', 'navTracking', 'navOrders', 'navDashboard', 'navDelivery', 'navBlog'].forEach(id => { document.getElementById(id)?.classList.remove('bg-cyan-500/20'); });
-            document.getElementById(`nav${section.charAt(0).toUpperCase() + section.slice(1)}`)?.classList.add('bg-cyan-500/20');
-            if (section === 'dashboard' && currentUser) { loadDashboardData(); checkFreeTier(); loadPaymentStatus(); loadCompaniesForRating(); }
-            if (section === 'orders' && currentUser) loadOrders();
-            if (section === 'delivery') initMap();
-            
-            // Update URL for PWA
-            if (window.history && window.history.pushState) {
-                const url = new URL(window.location.href);
-                url.searchParams.set('section', section);
-                window.history.pushState({}, '', url);
-            }
-        }
+        function showSection(section) { document.getElementById('adsSection')?.classList.add('hidden'); document.getElementById('trackingSection')?.classList.add('hidden'); document.getElementById('ordersSection')?.classList.add('hidden'); document.getElementById('dashboardSection')?.classList.add('hidden'); document.getElementById('deliverySection')?.classList.add('hidden'); document.getElementById('blogSection')?.classList.add('hidden'); document.getElementById('referralSection')?.classList.add('hidden'); document.getElementById('notificationsSection')?.classList.add('hidden'); document.getElementById('disputesSection')?.classList.add('hidden'); document.getElementById(`${section}Section`)?.classList.remove('hidden'); ['navAds', 'navTracking', 'navOrders', 'navDashboard', 'navDelivery', 'navBlog', 'navReferral', 'navNotifications', 'navDisputes'].forEach(id => { document.getElementById(id)?.classList.remove('bg-cyan-500/20'); }); document.getElementById(`nav${section.charAt(0).toUpperCase() + section.slice(1)}`)?.classList.add('bg-cyan-500/20'); if (section === 'dashboard' && currentUser) { loadDashboardData(); checkFreeTier(); loadPaymentStatus(); loadCompaniesForRating(); loadReferralStats(); } if (section === 'orders' && currentUser) loadOrders(); if (section === 'delivery') initMap(); if (section === 'referral' && currentUser) loadReferralData(); if (section === 'notifications' && currentUser) loadNotifications(); if (section === 'disputes' && currentUser) { loadDisputeOrders(); loadMyDisputes(); } if (window.history && window.history.pushState) { const url = new URL(window.location.href); url.searchParams.set('section', section); window.history.pushState({}, '', url); } }
         
-        async function trackOrder() {
-            const orderNumber = document.getElementById('trackOrderNumber').value.trim();
-            if (!orderNumber) { alert('Please enter an order number'); return; }
-            const resultDiv = document.getElementById('trackResult');
-            resultDiv.classList.remove('hidden');
-            resultDiv.innerHTML = '<div class="loading-spinner mx-auto"></div><p class="text-center mt-3">Searching...</p>';
-            try {
-                const res = await fetch(`/api/orders/${orderNumber}`);
-                const order = await res.json();
-                if (order.error) { resultDiv.innerHTML = `<div class="bg-red-500/20 border border-red-500 rounded-lg p-4 text-center">${order.error}</div>`; return; }
-                const statusColors = { pending: 'yellow', scanning: 'blue', in_transit: 'orange', quality_check: 'purple', delivered: 'green', disputed: 'red', completed: 'green' };
-                resultDiv.innerHTML = `<div class="glass-card p-5"><div class="flex justify-between items-start mb-4"><div><h3 class="font-bold text-xl">${order.productName}</h3><p class="text-gray-400 text-sm">Order #${order.orderNumber}</p></div><span class="px-3 py-1 rounded-full text-sm bg-${statusColors[order.status]}-500/30">${order.status.toUpperCase()}</span></div><div class="grid grid-cols-2 gap-4 mb-4"><div><span class="text-gray-400">Quantity:</span> ${order.quantity}</div><div><span class="text-gray-400">Payment:</span> ${order.paymentStatus}</div>${order.currentLocation?.address ? `<div class="col-span-2"><span class="text-gray-400">Location:</span> ${order.currentLocation.address}</div>` : ''}</div><div class="mt-4 flex gap-2"><button onclick="contactProvider('${order.providerId?._id}')" class="flex-1 bg-green-600 py-2 rounded-full text-sm"><i class="fab fa-whatsapp"></i> Contact Provider</button><button onclick="makeVideoCall('${order.providerId?._id}')" class="flex-1 bg-purple-600 py-2 rounded-full text-sm"><i class="fas fa-video"></i> Video Call</button></div></div>`;
-            } catch (error) { resultDiv.innerHTML = `<div class="bg-red-500/20 border border-red-500 rounded-lg p-4 text-center">Error tracking order</div>`; }
-        }
+        async function trackOrder() { const orderNumber = document.getElementById('trackOrderNumber').value.trim(); if (!orderNumber) { alert('Please enter an order number'); return; } const resultDiv = document.getElementById('trackResult'); resultDiv.classList.remove('hidden'); resultDiv.innerHTML = '<div class="loading-spinner mx-auto"></div><p class="text-center mt-3">Searching...</p>'; try { const res = await fetch(`/api/orders/${orderNumber}`); const order = await res.json(); if (order.error) { resultDiv.innerHTML = `<div class="bg-red-500/20 border border-red-500 rounded-lg p-4 text-center">${order.error}</div>`; return; } const statusColors = { pending: 'yellow', scanning: 'blue', in_transit: 'orange', quality_check: 'purple', delivered: 'green', disputed: 'red', completed: 'green' }; resultDiv.innerHTML = `<div class="glass-card p-5"><div class="flex justify-between items-start mb-4"><div><h3 class="font-bold text-xl">${order.productName}</h3><p class="text-gray-400 text-sm">Order #${order.orderNumber}</p></div><span class="px-3 py-1 rounded-full text-sm bg-${statusColors[order.status]}-500/30">${order.status.toUpperCase()}</span></div><div class="grid grid-cols-2 gap-4 mb-4"><div><span class="text-gray-400">Quantity:</span> ${order.quantity}</div><div><span class="text-gray-400">Payment:</span> ${order.paymentStatus}</div>${order.currentLocation?.address ? `<div class="col-span-2"><span class="text-gray-400">Location:</span> ${order.currentLocation.address}</div>` : ''}</div><div class="mt-4 flex gap-2"><button onclick="contactProvider('${order.providerId?._id}')" class="flex-1 bg-green-600 py-2 rounded-full text-sm"><i class="fab fa-whatsapp"></i> Contact Provider</button><button onclick="makeVideoCall('${order.providerId?._id}')" class="flex-1 bg-purple-600 py-2 rounded-full text-sm"><i class="fas fa-video"></i> Video Call</button></div></div>`; } catch (error) { resultDiv.innerHTML = `<div class="bg-red-500/20 border border-red-500 rounded-lg p-4 text-center">Error tracking order</div>`; } }
         
-        async function loadOrders() {
-            if (!currentUser) { document.getElementById('ordersList').innerHTML = `<div class="text-center py-12 text-gray-400"><i class="fas fa-lock text-4xl mb-3 block"></i><p>Please login</p><button onclick="showAuthModal('login')" class="mt-3 px-4 py-2 bg-cyan-500 rounded-full">Login</button></div>`; return; }
-            const res = await fetch('/api/orders', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
-            const orders = await res.json();
-            if (orders.length === 0) { document.getElementById('ordersList').innerHTML = `<div class="text-center py-12 text-gray-400"><i class="fas fa-box-open text-4xl mb-3 block"></i><p>No orders yet</p></div>`; return; }
-            document.getElementById('ordersList').innerHTML = orders.map(order => `<div class="glass-card p-4"><div class="flex justify-between items-start"><div><p class="font-bold">${order.productName}</p><p class="text-sm text-gray-400">#${order.orderNumber}</p></div><span class="px-2 py-1 rounded-full text-xs bg-${order.status === 'completed' ? 'green' : order.status === 'pending' ? 'yellow' : 'blue'}-500/30">${order.status}</span></div><div class="flex justify-between mt-3"><button onclick="trackOrderNumber('${order.orderNumber}')" class="text-cyan-400 text-sm"><i class="fas fa-map-marker-alt"></i> Track</button><button onclick="makeVideoCall('${order.senderId?._id}')" class="text-purple-400 text-sm"><i class="fas fa-video"></i> Video Call</button><button onclick="contactSeller('${order.senderId?._id}')" class="text-green-400 text-sm"><i class="fab fa-whatsapp"></i> Chat</button></div></div>`).join('');
-        }
+        async function loadOrders() { if (!currentUser) { document.getElementById('ordersList').innerHTML = `<div class="text-center py-12 text-gray-400"><i class="fas fa-lock text-4xl mb-3 block"></i><p>Please login</p><button onclick="showAuthModal('login')" class="mt-3 px-4 py-2 bg-cyan-500 rounded-full">Login</button></div>`; return; } const res = await fetch('/api/orders', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }); const orders = await res.json(); if (orders.length === 0) { document.getElementById('ordersList').innerHTML = `<div class="text-center py-12 text-gray-400"><i class="fas fa-box-open text-4xl mb-3 block"></i><p>No orders yet</p></div>`; return; } document.getElementById('ordersList').innerHTML = orders.map(order => `<div class="glass-card p-4"><div class="flex justify-between items-start"><div><p class="font-bold">${order.productName}</p><p class="text-sm text-gray-400">#${order.orderNumber}</p></div><span class="px-2 py-1 rounded-full text-xs bg-${order.status === 'completed' ? 'green' : order.status === 'pending' ? 'yellow' : 'blue'}-500/30">${order.status}</span></div><div class="flex justify-between mt-3"><button onclick="trackOrderNumber('${order.orderNumber}')" class="text-cyan-400 text-sm"><i class="fas fa-map-marker-alt"></i> Track</button><button onclick="makeVideoCall('${order.senderId?._id}')" class="text-purple-400 text-sm"><i class="fas fa-video"></i> Video Call</button><button onclick="contactSeller('${order.senderId?._id}')" class="text-green-400 text-sm"><i class="fab fa-whatsapp"></i> Chat</button></div></div>`).join(''); }
         
-        async function loadDashboardData() {
-            if (!currentUser) return;
-            try {
-                if (currentUser.role === 'admin') {
-                    const res = await fetch('/api/admin/stats', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
-                    const stats = await res.json();
-                    document.getElementById('statAds').textContent = stats.ads?.active || 0;
-                    document.getElementById('statOrders').textContent = stats.orders?.total || 0;
-                    document.getElementById('statRevenue').textContent = `$${stats.revenue?.total || 0}`;
-                } else if (currentUser.role === 'company') {
-                    const res = await fetch('/api/company/stats', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
-                    const stats = await res.json();
-                    document.getElementById('statAds').textContent = stats.ads?.active || 0;
-                    document.getElementById('statOrders').textContent = stats.orders?.total || 0;
-                    document.getElementById('statRevenue').textContent = `$${stats.spent || 0}`;
-                    const myAdsRes = await fetch('/api/ads/my', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
-                    const myAds = await myAdsRes.json();
-                    document.getElementById('myAdsList').innerHTML = myAds.map(ad => `<div class="bg-white/5 rounded-lg p-3 flex justify-between items-center"><div><p class="font-medium">${ad.title}</p><p class="text-sm text-gray-400">${ad.status} | ${ad.views || 0} views</p></div><button onclick="deleteAd('${ad._id}')" class="text-red-400"><i class="fas fa-trash"></i></button></div>`).join('');
-                }
-                const walletRes = await fetch('/api/auth/me', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
-                const userData = await walletRes.json();
-                document.getElementById('walletBadge').innerHTML = `<i class="fas fa-wallet"></i> $${userData.walletBalance || 0}`;
-            } catch (error) { console.error('Error loading dashboard:', error); }
-        }
+        async function loadDashboardData() { if (!currentUser) return; try { if (currentUser.role === 'admin') { const res = await fetch('/api/admin/stats', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }); const stats = await res.json(); document.getElementById('statAds').textContent = stats.ads?.active || 0; document.getElementById('statOrders').textContent = stats.orders?.total || 0; document.getElementById('statRevenue').textContent = `$${stats.revenue?.total || 0}`; } else if (currentUser.role === 'company') { const res = await fetch('/api/company/stats', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }); const stats = await res.json(); document.getElementById('statAds').textContent = stats.ads?.active || 0; document.getElementById('statOrders').textContent = stats.orders?.total || 0; document.getElementById('statRevenue').textContent = `$${stats.spent || 0}`; const myAdsRes = await fetch('/api/ads/my', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }); const myAds = await myAdsRes.json(); document.getElementById('myAdsList').innerHTML = myAds.map(ad => `<div class="bg-white/5 rounded-lg p-3 flex justify-between items-center"><div><p class="font-medium">${ad.title}</p><p class="text-sm text-gray-400">${ad.status} | ${ad.views || 0} views</p></div><button onclick="deleteAd('${ad._id}')" class="text-red-400"><i class="fas fa-trash"></i></button></div>`).join(''); } const walletRes = await fetch('/api/auth/me', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }); const userData = await walletRes.json(); document.getElementById('walletBadge').innerHTML = `<i class="fas fa-wallet"></i> $${userData.walletBalance || 0}`; } catch (error) { console.error('Error loading dashboard:', error); } }
         
-        document.getElementById('createAdForm')?.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (!currentUser) { alert('Please login first'); showAuthModal('login'); return; }
-            const formData = new FormData();
-            formData.append('title', document.getElementById('adTitle').value);
-            formData.append('description', document.getElementById('adDescription').value);
-            formData.append('category', document.getElementById('adCategory').value);
-            formData.append('adType', document.getElementById('adType').value);
-            formData.append('price', document.getElementById('adPrice').value);
-            formData.append('mediaType', 'image');
-            const mediaFile = document.getElementById('adMedia').files[0];
-            if (mediaFile) formData.append('media', mediaFile);
-            const res = await fetch('/api/ads/create', { method: 'POST', headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }, body: formData });
-            if (res.ok) { alert('Ad published successfully!'); document.getElementById('createAdForm').reset(); loadDashboardData(); loadAds(); }
-            else { const error = await res.json(); alert('Error: ' + error.error); }
-        });
+        document.getElementById('createAdForm')?.addEventListener('submit', async (e) => { e.preventDefault(); if (!currentUser) { alert('Please login first'); showAuthModal('login'); return; } const formData = new FormData(); formData.append('title', document.getElementById('adTitle').value); formData.append('description', document.getElementById('adDescription').value); formData.append('category', document.getElementById('adCategory').value); formData.append('adType', document.getElementById('adType').value); formData.append('price', document.getElementById('adPrice').value); formData.append('mediaType', 'image'); const mediaFile = document.getElementById('adMedia').files[0]; if (mediaFile) formData.append('media', mediaFile); const res = await fetch('/api/ads/create', { method: 'POST', headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }, body: formData }); if (res.ok) { alert('Ad published successfully!'); document.getElementById('createAdForm').reset(); loadDashboardData(); loadAds(); } else { const error = await res.json(); alert('Error: ' + error.error); } });
         
-        // ============ PAYMENT FUNCTIONS ============
-        async function checkFreeTier() {
-            const token = localStorage.getItem('token');
-            if (!token) return;
-            try {
-                const res = await fetch('/api/check-free-tier', { headers: { Authorization: `Bearer ${token}` } });
-                const data = await res.json();
-                const freeTierInfo = document.getElementById('freeTierInfo');
-                if (freeTierInfo && data.hasFreeTier) freeTierInfo.innerHTML = `<div class="bg-green-500/20 border border-green-500 rounded-lg p-3 mb-4">🎉 FREE TIER ACTIVE until: ${new Date(data.expiresAt).toLocaleDateString()}</div>`;
-                else if (freeTierInfo) freeTierInfo.innerHTML = `<div class="bg-yellow-500/20 border border-yellow-500 rounded-lg p-3 mb-4">⚠️ Free tier expired. Please make a payment.</div>`;
-            } catch (error) { console.error('Error checking free tier:', error); }
-        }
+        async function checkFreeTier() { const token = localStorage.getItem('token'); if (!token) return; try { const res = await fetch('/api/check-free-tier', { headers: { Authorization: `Bearer ${token}` } }); const data = await res.json(); const freeTierInfo = document.getElementById('freeTierInfo'); if (freeTierInfo && data.hasFreeTier) freeTierInfo.innerHTML = `<div class="bg-green-500/20 border border-green-500 rounded-lg p-3 mb-4">🎉 FREE TIER ACTIVE until: ${new Date(data.expiresAt).toLocaleDateString()}</div>`; else if (freeTierInfo) freeTierInfo.innerHTML = `<div class="bg-yellow-500/20 border border-yellow-500 rounded-lg p-3 mb-4">⚠️ Free tier expired. Please make a payment.</div>`; } catch (error) { console.error('Error checking free tier:', error); } }
         
-        const paymentForm = document.getElementById('paymentForm');
-        if (paymentForm) {
-            paymentForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const token = localStorage.getItem('token');
-                if (!token) { alert('Please login first'); return; }
-                const formData = new FormData();
-                formData.append('amount', document.getElementById('paymentAmount').value);
-                formData.append('phoneNumber', document.getElementById('paymentPhone').value);
-                formData.append('transactionId', document.getElementById('paymentTransactionId').value);
-                formData.append('screenshot', document.getElementById('paymentScreenshot').files[0]);
-                const res = await fetch('/api/payments/upload-screenshot', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: formData });
-                const data = await res.json();
-                alert(data.message);
-                loadPaymentStatus();
-                paymentForm.reset();
-                showNotification('Payment Uploaded', 'Our team will verify within 24 hours', 'info');
-            });
-        }
+        const paymentForm = document.getElementById('paymentForm'); if (paymentForm) { paymentForm.addEventListener('submit', async (e) => { e.preventDefault(); const token = localStorage.getItem('token'); if (!token) { alert('Please login first'); return; } const formData = new FormData(); formData.append('amount', document.getElementById('paymentAmount').value); formData.append('phoneNumber', document.getElementById('paymentPhone').value); formData.append('transactionId', document.getElementById('paymentTransactionId').value); formData.append('screenshot', document.getElementById('paymentScreenshot').files[0]); const res = await fetch('/api/payments/upload-screenshot', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: formData }); const data = await res.json(); alert(data.message); loadPaymentStatus(); paymentForm.reset(); showNotification('Payment Uploaded', 'Our team will verify within 24 hours', 'info'); }); } }
         
-        async function loadPaymentStatus() {
-            const token = localStorage.getItem('token');
-            if (!token) return;
-            try {
-                const res = await fetch('/api/payments/status', { headers: { Authorization: `Bearer ${token}` } });
-                const data = await res.json();
-                const paymentStatus = document.getElementById('paymentStatus');
-                if (paymentStatus) paymentStatus.innerHTML = `<div class="bg-white/10 rounded-lg p-4"><h3 class="font-bold mb-2">Payment Status</h3><p>Premium Active: ${data.isPremium ? '✅ Yes' : '❌ No'}</p>${data.premiumExpiry ? `<p>Expires: ${new Date(data.premiumExpiry).toLocaleDateString()}</p>` : ''}<h4 class="font-bold mt-3 mb-2">History:</h4>${data.payments && data.payments.length > 0 ? data.payments.map(p => `<div class="bg-white/5 rounded p-2 mb-2 text-sm">Amount: ${p.amount} TZS | Status: ${p.status}${p.status === 'pending' ? ' ⏳ Pending' : ' ✅ Verified'}</div>`).join('') : '<p>No payment history</p>'}</div>`;
-            } catch (error) { console.error('Error loading payment status:', error); }
-        }
+        async function loadPaymentStatus() { const token = localStorage.getItem('token'); if (!token) return; try { const res = await fetch('/api/payments/status', { headers: { Authorization: `Bearer ${token}` } }); const data = await res.json(); const paymentStatus = document.getElementById('paymentStatus'); if (paymentStatus) paymentStatus.innerHTML = `<div class="bg-white/10 rounded-lg p-4"><h3 class="font-bold mb-2">Payment Status</h3><p>Premium Active: ${data.isPremium ? '✅ Yes' : '❌ No'}</p>${data.premiumExpiry ? `<p>Expires: ${new Date(data.premiumExpiry).toLocaleDateString()}</p>` : ''}<h4 class="font-bold mt-3 mb-2">History:</h4>${data.payments && data.payments.length > 0 ? data.payments.map(p => `<div class="bg-white/5 rounded p-2 mb-2 text-sm">Amount: ${p.amount} TZS | Status: ${p.status}${p.status === 'pending' ? ' ⏳ Pending' : ' ✅ Verified'}</div>`).join('') : '<p>No payment history</p>'}</div>`; } catch (error) { console.error('Error loading payment status:', error); } }
         
-        // ============ RATING FUNCTIONS ============
-        async function loadCompaniesForRating() {
-            const res = await fetch('/api/ads');
-            const ads = await res.json();
-            const companies = [...new Map(ads.map(ad => [ad.companyId?._id, ad.companyId])).values()].filter(c => c);
-            const select = document.getElementById('rateCompanyId');
-            if (select) select.innerHTML = '<option value="">Select company to rate</option>' + companies.map(c => `<option value="${c._id}">${c.companyName || c.fullName} (⭐ ${c.rating || 0})</option>`).join('');
-        }
+        async function loadCompaniesForRating() { const res = await fetch('/api/ads'); const ads = await res.json(); const companies = [...new Map(ads.map(ad => [ad.companyId?._id, ad.companyId])).values()].filter(c => c); const select = document.getElementById('rateCompanyId'); if (select) select.innerHTML = '<option value="">Select company to rate</option>' + companies.map(c => `<option value="${c._id}">${c.companyName || c.fullName} (⭐ ${c.rating || 0})</option>`).join(''); }
         
-        let selectedRating = 0;
-        document.querySelectorAll('#ratingStars i').forEach(star => {
-            star.addEventListener('click', () => { selectedRating = parseInt(star.dataset.rating); document.querySelectorAll('#ratingStars i').forEach((s, i) => { if (i < selectedRating) s.className = 'fas fa-star text-3xl mx-1 text-yellow-400'; else s.className = 'far fa-star text-3xl mx-1 text-gray-400'; }); });
-        });
+        let selectedRating = 0; document.querySelectorAll('#ratingStars i').forEach(star => { star.addEventListener('click', () => { selectedRating = parseInt(star.dataset.rating); document.querySelectorAll('#ratingStars i').forEach((s, i) => { if (i < selectedRating) s.className = 'fas fa-star text-3xl mx-1 text-yellow-400'; else s.className = 'far fa-star text-3xl mx-1 text-gray-400'; }); }); });
         
-        async function submitRating() {
-            const companyId = document.getElementById('rateCompanyId').value;
-            if (!companyId) { alert('Select a company to rate'); return; }
-            if (selectedRating === 0) { alert('Select a rating (1-5 stars)'); return; }
-            const comment = document.getElementById('ratingComment').value;
-            const res = await fetch('/api/ratings/company', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` }, body: JSON.stringify({ companyId, orderId: 'test', rating: selectedRating, comment, deliveryOnTime: true, qualityMatched: true, communication: selectedRating }) });
-            if (res.ok) { alert('Thank you for your rating!'); selectedRating = 0; document.getElementById('ratingComment').value = ''; document.querySelectorAll('#ratingStars i').forEach(s => s.className = 'far fa-star text-3xl mx-1'); loadCompaniesForRating(); }
-            else alert('Error submitting rating');
-        }
+        async function submitRating() { const companyId = document.getElementById('rateCompanyId').value; if (!companyId) { alert('Select a company to rate'); return; } if (selectedRating === 0) { alert('Select a rating (1-5 stars)'); return; } const comment = document.getElementById('ratingComment').value; const res = await fetch('/api/ratings/company', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` }, body: JSON.stringify({ companyId, orderId: 'test', rating: selectedRating, comment, deliveryOnTime: true, qualityMatched: true, communication: selectedRating }) }); if (res.ok) { alert('Thank you for your rating!'); selectedRating = 0; document.getElementById('ratingComment').value = ''; document.querySelectorAll('#ratingStars i').forEach(s => s.className = 'far fa-star text-3xl mx-1'); loadCompaniesForRating(); } else alert('Error submitting rating'); }
         
-        // ============ GPS & MAP FUNCTIONS ============
-        function initMap() {
-            const defaultLoc = [-6.7924, 39.2083];
-            map = L.map('map').setView(defaultLoc, 13);
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; OpenStreetMap' }).addTo(map);
-            marker = L.marker(defaultLoc).addTo(map);
-        }
-        
-        function startLiveTracking() {
-            if ('geolocation' in navigator) {
-                watchId = navigator.geolocation.watchPosition((pos) => {
-                    const lat = pos.coords.latitude, lng = pos.coords.longitude;
-                    marker.setLatLng([lat, lng]);
-                    map.setView([lat, lng]);
-                    document.getElementById('trackingStatus').innerHTML = '<i class="fas fa-circle text-green-400"></i> Tracking active';
-                    socket.emit('location-update', { lat, lng });
-                }, (err) => { console.error(err); document.getElementById('trackingStatus').innerHTML = '<i class="fas fa-exclamation-triangle text-red-400"></i> Location error'; }, { enableHighAccuracy: true });
-            } else alert('Geolocation not supported');
-        }
-        
+        function initMap() { const defaultLoc = [-6.7924, 39.2083]; map = L.map('map').setView(defaultLoc, 13); L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; OpenStreetMap' }).addTo(map); marker = L.marker(defaultLoc).addTo(map); }
+        function startLiveTracking() { if ('geolocation' in navigator) { watchId = navigator.geolocation.watchPosition((pos) => { const lat = pos.coords.latitude, lng = pos.coords.longitude; marker.setLatLng([lat, lng]); map.setView([lat, lng]); document.getElementById('trackingStatus').innerHTML = '<i class="fas fa-circle text-green-400"></i> Tracking active'; socket.emit('location-update', { lat, lng }); }, (err) => { console.error(err); document.getElementById('trackingStatus').innerHTML = '<i class="fas fa-exclamation-triangle text-red-400"></i> Location error'; }, { enableHighAccuracy: true }); } else alert('Geolocation not supported'); }
         function stopLiveTracking() { if (watchId) { navigator.geolocation.clearWatch(watchId); watchId = null; document.getElementById('trackingStatus').innerHTML = '<i class="fas fa-stop-circle text-red-400"></i> Tracking stopped'; } }
+        function scanProduct() { const scanInput = document.getElementById('scanInput').value; if (!scanInput) { alert('Enter QR code or barcode'); return; } document.getElementById('scanResult').innerHTML = `<div class="bg-green-500/20 border border-green-500 rounded-lg p-3 mt-3"><i class="fas fa-check-circle text-green-400"></i> Product verified!<br>Code: ${scanInput}<br>Status: Authentic ✅</div>`; showNotification('Product Scanned', `Product ${scanInput} verified successfully`, 'success'); }
         
-        function scanProduct() {
-            const scanInput = document.getElementById('scanInput').value;
-            if (!scanInput) { alert('Enter QR code or barcode'); return; }
-            document.getElementById('scanResult').innerHTML = `<div class="bg-green-500/20 border border-green-500 rounded-lg p-3 mt-3"><i class="fas fa-check-circle text-green-400"></i> Product verified!<br>Code: ${scanInput}<br>Status: Authentic ✅</div>`;
-            showNotification('Product Scanned', `Product ${scanInput} verified successfully`, 'success');
-        }
-        
-        // ============ VIDEO CALL FUNCTIONS ============
-        async function makeVideoCall(userId) {
-            document.getElementById('videoCallModal').style.display = 'flex';
-            try {
-                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                document.getElementById('localVideo').srcObject = localStream;
-                peerConnection = new RTCPeerConnection(configuration);
-                localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
-                peerConnection.ontrack = (event) => { document.getElementById('remoteVideo').srcObject = event.streams[0]; };
-                const offer = await peerConnection.createOffer();
-                await peerConnection.setLocalDescription(offer);
-                socket.emit('call-user', { to: userId, signalData: offer, type: 'video' });
-            } catch (error) { console.error('Video call error:', error); alert('Camera/microphone access denied'); }
-        }
-        
+        async function makeVideoCall(userId) { document.getElementById('videoCallModal').style.display = 'flex'; try { localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true }); document.getElementById('localVideo').srcObject = localStream; peerConnection = new RTCPeerConnection(configuration); localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream)); peerConnection.ontrack = (event) => { document.getElementById('remoteVideo').srcObject = event.streams[0]; }; const offer = await peerConnection.createOffer(); await peerConnection.setLocalDescription(offer); socket.emit('call-user', { to: userId, signalData: offer, type: 'video' }); } catch (error) { console.error('Video call error:', error); alert('Camera/microphone access denied'); } }
         function toggleMute() { if (localStream) localStream.getAudioTracks()[0].enabled = !localStream.getAudioTracks()[0].enabled; }
         function toggleVideo() { if (localStream) localStream.getVideoTracks()[0].enabled = !localStream.getVideoTracks()[0].enabled; }
         function endCall() { if (peerConnection) peerConnection.close(); if (localStream) localStream.getTracks().forEach(t => t.stop()); document.getElementById('videoCallModal').style.display = 'none'; }
         function closeVideoCall() { endCall(); }
         
-        socket.on('incoming-call', async ({ from, signalData }) => {
-            if (confirm(`Incoming video call from user. Accept?`)) {
-                document.getElementById('videoCallModal').style.display = 'flex';
-                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                document.getElementById('localVideo').srcObject = localStream;
-                peerConnection = new RTCPeerConnection(configuration);
-                localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
-                peerConnection.ontrack = (event) => { document.getElementById('remoteVideo').srcObject = event.streams[0]; };
-                await peerConnection.setRemoteDescription(new RTCSessionDescription(signalData));
-                const answer = await peerConnection.createAnswer();
-                await peerConnection.setLocalDescription(answer);
-                socket.emit('answer-call', { to: from, signalData: answer });
-            }
-        });
-        
+        socket.on('incoming-call', async ({ from, signalData }) => { if (confirm(`Incoming video call from user. Accept?`)) { document.getElementById('videoCallModal').style.display = 'flex'; localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true }); document.getElementById('localVideo').srcObject = localStream; peerConnection = new RTCPeerConnection(configuration); localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream)); peerConnection.ontrack = (event) => { document.getElementById('remoteVideo').srcObject = event.streams[0]; }; await peerConnection.setRemoteDescription(new RTCSessionDescription(signalData)); const answer = await peerConnection.createAnswer(); await peerConnection.setLocalDescription(answer); socket.emit('answer-call', { to: from, signalData: answer }); } });
         socket.on('call-answered', async ({ signalData }) => { if (peerConnection) await peerConnection.setRemoteDescription(new RTCSessionDescription(signalData)); });
         
-        // ============ AUTH FUNCTIONS ============
-        function showAuthModal(mode) {
-            authMode = mode;
-            const modal = document.getElementById('authModal');
-            const title = document.getElementById('modalTitle');
-            const registerFields = document.getElementById('registerFields');
-            const submitBtn = document.getElementById('submitBtnText');
-            const toggleBtn = document.getElementById('toggleAuthBtn');
-            const toggleText = document.getElementById('toggleAuthText');
-            if (mode === 'login') { title.textContent = 'Login'; registerFields.classList.add('hidden'); submitBtn.textContent = 'Login'; toggleBtn.textContent = 'Register'; toggleText.textContent = "Don't have an account?"; }
-            else { title.textContent = 'Register'; registerFields.classList.remove('hidden'); submitBtn.textContent = 'Register'; toggleBtn.textContent = 'Login'; toggleText.textContent = 'Already have an account?'; }
-            modal.classList.remove('hidden');
-        }
+        // Chat Bot Functions
+        const chatToggle = document.getElementById('chatToggle'); const chatBot = document.getElementById('chatBot'); const chatClose = document.getElementById('chatClose'); const chatMinimize = document.getElementById('chatMinimize'); const chatInput = document.getElementById('chatInput'); const chatSend = document.getElementById('chatSend'); const chatMessages = document.getElementById('chatMessages');
+        let isChatOpen = false;
+        chatToggle.onclick = () => { if (isChatOpen) { chatBot.classList.remove('open'); setTimeout(() => chatBot.style.display = 'none', 300); isChatOpen = false; } else { chatBot.style.display = 'flex'; setTimeout(() => chatBot.classList.add('open'), 10); isChatOpen = true; } };
+        chatClose.onclick = () => { chatBot.classList.remove('open'); setTimeout(() => chatBot.style.display = 'none', 300); isChatOpen = false; };
+        chatMinimize.onclick = () => { chatBot.classList.remove('open'); setTimeout(() => chatBot.style.display = 'none', 300); isChatOpen = false; };
         
+        async function sendBotMessage() { const msg = chatInput.value.trim(); if (!msg) return; chatMessages.innerHTML += `<div class="message-user"><i class="fas fa-user mr-2"></i> ${escapeHtml(msg)}</div>`; chatInput.value = ''; chatMessages.scrollTop = chatMessages.scrollHeight; const typingIndicator = document.createElement('div'); typingIndicator.className = 'message-bot typing-indicator'; typingIndicator.innerHTML = '<i class="fas fa-robot mr-2"></i> <span class="typing-dots">...</span>'; chatMessages.appendChild(typingIndicator); chatMessages.scrollTop = chatMessages.scrollHeight; try { const res = await fetch('/api/bot/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: msg, context: { userRole: currentUser?.role || 'guest', userEmail: currentUser?.email }, language: currentLanguage }) }); const data = await res.json(); chatMessages.removeChild(typingIndicator); chatMessages.innerHTML += `<div class="message-bot"><i class="fas fa-robot mr-2"></i> ${data.reply}</div>`; chatMessages.scrollTop = chatMessages.scrollHeight; speakText(data.reply); } catch (error) { chatMessages.removeChild(typingIndicator); chatMessages.innerHTML += `<div class="message-bot"><i class="fas fa-robot mr-2"></i> Sorry, having trouble. Contact +255796323348 on WhatsApp.</div>`; chatMessages.scrollTop = chatMessages.scrollHeight; } }
+        chatSend.onclick = sendBotMessage; chatInput.onkeypress = (e) => { if (e.key === 'Enter') sendBotMessage(); };
+        
+        // Voice Recording
+        document.getElementById('voiceRecordBtn').onclick = async () => { if (mediaRecorder && mediaRecorder.state === 'recording') { mediaRecorder.stop(); document.getElementById('voiceRecordBtn').innerHTML = '<i class="fas fa-microphone"></i>'; return; } const stream = await navigator.mediaDevices.getUserMedia({ audio: true }); mediaRecorder = new MediaRecorder(stream); audioChunks = []; mediaRecorder.ondataavailable = (event) => { audioChunks.push(event.data); }; mediaRecorder.onstop = async () => { const audioBlob = new Blob(audioChunks, { type: 'audio/webm' }); chatMessages.innerHTML += `<div class="message-user"><i class="fas fa-microphone mr-2"></i> Voice message sent</div>`; stream.getTracks().forEach(track => track.stop()); }; mediaRecorder.start(); document.getElementById('voiceRecordBtn').innerHTML = '<i class="fas fa-stop text-red-400"></i>'; };
+        
+        // Speech Recognition
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) { const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition; recognition = new SpeechRecognition(); recognition.continuous = false; recognition.interimResults = false; recognition.lang = 'en-US'; recognition.onstart = () => { isListening = true; document.getElementById('speechToTextBtn').classList.add('voice-active'); document.getElementById('voiceStatus').innerHTML = '<i class="fas fa-circle text-green-400 animate-pulse"></i> Listening... Speak now'; document.getElementById('speechToTextBtn').innerHTML = '<i class="fas fa-microphone-alt"></i>'; }; recognition.onend = () => { isListening = false; document.getElementById('speechToTextBtn').classList.remove('voice-active'); document.getElementById('voiceStatus').innerHTML = ''; document.getElementById('speechToTextBtn').innerHTML = '<i class="fas fa-microphone-alt"></i>'; }; recognition.onresult = (event) => { const transcript = event.results[0][0].transcript; chatInput.value = transcript; document.getElementById('voiceStatus').innerHTML = `<i class="fas fa-check text-green-400"></i> Heard: "${transcript}"`; setTimeout(() => { sendBotMessage(); }, 500); }; recognition.onerror = (event) => { console.error('Speech recognition error:', event.error); document.getElementById('voiceStatus').innerHTML = `<i class="fas fa-exclamation-triangle text-red-400"></i> Error: ${event.error}`; setTimeout(() => { document.getElementById('voiceStatus').innerHTML = ''; }, 3000); isListening = false; document.getElementById('speechToTextBtn').classList.remove('voice-active'); }; document.getElementById('speechToTextBtn').onclick = () => { if (isListening) recognition.stop(); else try { recognition.start(); } catch (error) { console.error('Recognition start error:', error); } }; } else { document.getElementById('speechToTextBtn').disabled = true; document.getElementById('speechToTextBtn').style.opacity = '0.5'; }
+        
+        // Text to Speech
+        function speakText(text) { if ('speechSynthesis' in window) { window.speechSynthesis.cancel(); const utterance = new SpeechSynthesisUtterance(text); utterance.lang = currentLanguage === 'sw' ? 'sw-TZ' : 'en-US'; utterance.rate = 1; window.speechSynthesis.speak(utterance); } }
+        
+        // Screen Share
+        async function startScreenShare() { try { screenStream = await navigator.mediaDevices.getDisplayMedia({ video: { cursor: "always", displaySurface: "monitor" }, audio: false }); document.getElementById('screenVideo').srcObject = screenStream; document.getElementById('screenShareModal').classList.remove('hidden'); document.getElementById('screenShareModal').style.display = 'flex'; document.getElementById('screenShareBtn').classList.add('screen-share-active'); showNotification('Screen Sharing', 'You are now sharing your screen', 'info'); screenStream.getVideoTracks()[0].onended = () => stopScreenShare(); } catch (error) { console.error('Screen share error:', error); showNotification('Screen Share Failed', 'Could not start screen sharing', 'error'); } }
+        function stopScreenShare() { if (screenStream) { screenStream.getTracks().forEach(track => track.stop()); screenStream = null; } document.getElementById('screenVideo').srcObject = null; document.getElementById('screenShareModal').classList.add('hidden'); document.getElementById('screenShareModal').style.display = 'none'; document.getElementById('screenShareBtn').classList.remove('screen-share-active'); showNotification('Screen Sharing', 'Screen sharing stopped', 'info'); }
+        document.getElementById('screenShareBtn').onclick = () => { startScreenShare(); };
+        document.getElementById('stopScreenShareBtn').onclick = stopScreenShare;
+        
+        // Voice Call
+        async function startVoiceCall() { try { voiceCallStream = await navigator.mediaDevices.getUserMedia({ audio: true }); document.getElementById('voiceCallBtn').classList.add('voice-call-active'); isVoiceCallActive = true; document.getElementById('voiceCallBtn').innerHTML = '<i class="fas fa-phone-slash"></i>'; showNotification('Voice Call', 'Microphone active. You can speak now!', 'success'); } catch (error) { console.error('Voice call error:', error); showNotification('Voice Call Failed', 'Could not access microphone', 'error'); } }
+        function stopVoiceCall() { if (voiceCallStream) { voiceCallStream.getTracks().forEach(track => track.stop()); voiceCallStream = null; } document.getElementById('voiceCallBtn').classList.remove('voice-call-active'); isVoiceCallActive = false; document.getElementById('voiceCallBtn').innerHTML = '<i class="fas fa-phone-alt"></i>'; showNotification('Voice Call', 'Microphone deactivated', 'info'); }
+        document.getElementById('voiceCallBtn').onclick = () => { if (isVoiceCallActive) stopVoiceCall(); else startVoiceCall(); };
+        
+        // Referral Functions
+        async function loadReferralData() { const token = localStorage.getItem('token'); if (!token) return; try { const res = await fetch('/api/user/referral-code', { headers: { Authorization: `Bearer ${token}` } }); const data = await res.json(); document.getElementById('referralLink').value = `https://cityfind.zass.website/?ref=${data.referralCode}`; const statsRes = await fetch('/api/referral/stats', { headers: { Authorization: `Bearer ${token}` } }); const stats = await statsRes.json(); document.getElementById('referralTotal').textContent = stats.total || 0; document.getElementById('referralCompleted').textContent = stats.completed || 0; document.getElementById('referralEarned').textContent = `$${stats.totalEarned || 0}`; } catch (error) { console.error('Error loading referral data:', error); } }
+        async function loadReferralStats() { const token = localStorage.getItem('token'); if (!token) return; try { const res = await fetch('/api/referral/stats', { headers: { Authorization: `Bearer ${token}` } }); const stats = await res.json(); document.getElementById('statReferrals').textContent = stats.completed || 0; } catch (error) { console.error('Error loading referral stats:', error); } }
+        function copyReferralLink() { const link = document.getElementById('referralLink'); link.select(); document.execCommand('copy'); showNotification('Copied!', 'Referral link copied to clipboard', 'success'); }
+        async function sendReferral() { const email = document.getElementById('referralEmail').value; if (!email) { alert('Please enter an email address'); return; } const token = localStorage.getItem('token'); if (!token) { alert('Please login first'); return; } try { const res = await fetch('/api/referral/create', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ email }) }); if (res.ok) { alert(`Invitation sent to ${email}!`); document.getElementById('referralEmail').value = ''; loadReferralData(); } else { const error = await res.json(); alert('Error: ' + error.error); } } catch (error) { console.error('Error sending referral:', error); } }
+        
+        // Notifications
+        async function loadNotifications() { const token = localStorage.getItem('token'); if (!token) return; try { const res = await fetch('/api/notifications', { headers: { Authorization: `Bearer ${token}` } }); const notifications = await res.json(); const container = document.getElementById('notificationsList'); if (notifications.length === 0) { container.innerHTML = '<div class="text-center py-8 text-gray-400">No notifications yet</div>'; } else { container.innerHTML = notifications.map(n => `<div class="glass-card p-3 ${!n.isRead ? 'border-l-4 border-cyan-400' : ''}"><div class="flex justify-between"><span class="font-semibold">${n.title}</span><span class="text-xs text-gray-500">${new Date(n.createdAt).toLocaleString()}</span></div><p class="text-sm text-gray-400 mt-1">${n.body}</p></div>`).join(''); const unreadCount = notifications.filter(n => !n.isRead).length; const countBadge = document.getElementById('notificationCount'); if (countBadge) { if (unreadCount > 0) { countBadge.textContent = unreadCount; countBadge.classList.remove('hidden'); } else { countBadge.classList.add('hidden'); } } } } catch (error) { console.error('Error loading notifications:', error); } }
+        
+        // Dispute Functions
+        async function loadDisputeOrders() { const token = localStorage.getItem('token'); if (!token) return; try { const res = await fetch('/api/orders', { headers: { Authorization: `Bearer ${token}` } }); const orders = await res.json(); const select = document.getElementById('disputeOrderId'); select.innerHTML = '<option value="">Select order</option>' + orders.filter(o => o.status !== 'completed' && o.status !== 'disputed').map(o => `<option value="${o._id}">${o.orderNumber} - ${o.productName}</option>`).join(''); } catch (error) { console.error('Error loading dispute orders:', error); } }
+        async function loadMyDisputes() { const token = localStorage.getItem('token'); if (!token) return; try { const res = await fetch('/api/disputes/my', { headers: { Authorization: `Bearer ${token}` } }); const disputes = await res.json(); const container = document.getElementById('myDisputesList'); if (disputes.length === 0) { container.innerHTML = '<div class="text-center py-8 text-gray-400">No disputes filed</div>'; } else { container.innerHTML = disputes.map(d => `<div class="dispute-card glass-card p-4"><div class="flex justify-between"><span class="font-semibold">Order: ${d.orderId?.orderNumber}</span><span class="px-2 py-1 rounded-full text-xs bg-${d.status === 'open' ? 'yellow' : d.status === 'resolved' ? 'green' : 'blue'}-500/30">${d.status}</span></div><p class="text-sm mt-1"><strong>Reason:</strong> ${d.reason}</p><p class="text-sm text-gray-400 mt-1">${d.description}</p>${d.resolution ? `<p class="text-sm text-green-400 mt-2">Resolution: ${d.resolution}</p>` : ''}</div>`).join(''); } } catch (error) { console.error('Error loading my disputes:', error); } }
+        
+        document.getElementById('disputeForm')?.addEventListener('submit', async (e) => { e.preventDefault(); const token = localStorage.getItem('token'); if (!token) { alert('Please login first'); return; } const formData = new FormData(); formData.append('orderId', document.getElementById('disputeOrderId').value); formData.append('reason', document.getElementById('disputeReason').value); formData.append('description', document.getElementById('disputeDescription').value); const evidenceFile = document.getElementById('disputeEvidence').files[0]; if (evidenceFile) formData.append('evidence', evidenceFile); const res = await fetch('/api/dispute/raise', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: formData }); if (res.ok) { alert('Dispute raised successfully! Our team will review within 24 hours.'); document.getElementById('disputeForm').reset(); loadMyDisputes(); } else { const error = await res.json(); alert('Error: ' + error.error); } });
+        
+        function showAuthModal(mode) { authMode = mode; const modal = document.getElementById('authModal'); const title = document.getElementById('modalTitle'); const registerFields = document.getElementById('registerFields'); const submitBtn = document.getElementById('submitBtnText'); const toggleBtn = document.getElementById('toggleAuthBtn'); const toggleText = document.getElementById('toggleAuthText'); if (mode === 'login') { title.textContent = 'Login'; registerFields.classList.add('hidden'); submitBtn.textContent = 'Login'; toggleBtn.textContent = 'Register'; toggleText.textContent = "Don't have an account?"; } else { title.textContent = 'Register'; registerFields.classList.remove('hidden'); submitBtn.textContent = 'Register'; toggleBtn.textContent = 'Login'; toggleText.textContent = 'Already have an account?'; } modal.classList.remove('hidden'); }
         function closeAuthModal() { document.getElementById('authModal').classList.add('hidden'); }
         function toggleAuthMode() { authMode = authMode === 'login' ? 'register' : 'login'; showAuthModal(authMode); }
         
-        document.getElementById('authForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('authEmail').value;
-            const password = document.getElementById('authPassword').value;
-            if (authMode === 'login') {
-                const res = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
-                if (res.ok) { const data = await res.json(); localStorage.setItem('token', data.token); currentUser = data.user; updateUIForUser(); closeAuthModal(); loadDashboardData(); loadOrders(); showNotification('Welcome Back!', `Hello ${currentUser.fullName}`, 'success'); }
-                else { const error = await res.json(); alert('Login failed: ' + error.error); }
-            } else {
-                const fullName = document.getElementById('regFullName').value;
-                const phone = document.getElementById('regPhone').value;
-                const role = document.getElementById('regRole').value;
-                const companyName = document.getElementById('regCompanyName').value;
-                const res = await fetch('/api/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fullName, email, password, phone, role, companyName }) });
-                if (res.ok) { const data = await res.json(); localStorage.setItem('token', data.token); currentUser = data.user; updateUIForUser(); closeAuthModal(); alert('Registration successful! Welcome to City Find!'); showNotification('Welcome!', 'Your account has been created', 'success'); }
-                else { const error = await res.json(); alert('Registration failed: ' + error.error); }
-            }
-        });
+        document.getElementById('authForm').addEventListener('submit', async (e) => { e.preventDefault(); const email = document.getElementById('authEmail').value; const password = document.getElementById('authPassword').value; if (authMode === 'login') { const res = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) }); if (res.ok) { const data = await res.json(); localStorage.setItem('token', data.token); currentUser = data.user; updateUIForUser(); closeAuthModal(); loadDashboardData(); loadOrders(); loadReferralData(); showNotification('Welcome Back!', `Hello ${currentUser.fullName}`, 'success'); } else { const error = await res.json(); alert('Login failed: ' + error.error); } } else { const fullName = document.getElementById('regFullName').value; const phone = document.getElementById('regPhone').value; const role = document.getElementById('regRole').value; const companyName = document.getElementById('regCompanyName').value; const res = await fetch('/api/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fullName, email, password, phone, role, companyName }) }); if (res.ok) { const data = await res.json(); localStorage.setItem('token', data.token); currentUser = data.user; updateUIForUser(); closeAuthModal(); alert('Registration successful! Welcome to City Find!'); showNotification('Welcome!', 'Your account has been created', 'success'); } else { const error = await res.json(); alert('Registration failed: ' + error.error); } } });
         
-        function updateUIForUser() {
-            if (currentUser) { document.getElementById('authButtons').classList.add('hidden'); document.getElementById('userInfo').classList.remove('hidden'); document.getElementById('userName').textContent = currentUser.fullName || currentUser.email.split('@')[0]; document.getElementById('userRole').textContent = currentUser.role; }
-            else { document.getElementById('authButtons').classList.remove('hidden'); document.getElementById('userInfo').classList.add('hidden'); }
-        }
-        
+        function updateUIForUser() { if (currentUser) { document.getElementById('authButtons').classList.add('hidden'); document.getElementById('userInfo').classList.remove('hidden'); document.getElementById('userName').textContent = currentUser.fullName || currentUser.email.split('@')[0]; document.getElementById('userRole').textContent = currentUser.role; } else { document.getElementById('authButtons').classList.remove('hidden'); document.getElementById('userInfo').classList.add('hidden'); } }
         function logout() { localStorage.removeItem('token'); currentUser = null; updateUIForUser(); showSection('ads'); alert('Logged out successfully'); }
         
-        // ============ CHAT BOT FUNCTIONS ============
-        const chatToggle = document.getElementById('chatToggle');
-        const chatBot = document.getElementById('chatBot');
-        const chatClose = document.getElementById('chatClose');
-        const chatMinimize = document.getElementById('chatMinimize');
-        const chatInput = document.getElementById('chatInput');
-        const chatSend = document.getElementById('chatSend');
-        const chatMessages = document.getElementById('chatMessages');
-        chatToggle.onclick = () => chatBot.classList.add('open');
-        chatClose.onclick = () => chatBot.classList.remove('open');
-        chatMinimize.onclick = () => chatBot.classList.remove('open');
-        
-        async function sendBotMessage() {
-            const msg = chatInput.value.trim();
-            if (!msg) return;
-            chatMessages.innerHTML += `<div class="message-user"><i class="fas fa-user mr-2"></i> ${escapeHtml(msg)}</div>`;
-            chatInput.value = '';
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-            try {
-                const res = await fetch('/api/bot/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: msg, context: { userRole: currentUser?.role || 'guest', userEmail: currentUser?.email }, language: currentLanguage }) });
-                const data = await res.json();
-                chatMessages.innerHTML += `<div class="message-bot"><i class="fas fa-robot mr-2"></i> ${data.reply}</div>`;
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-            } catch (error) { chatMessages.innerHTML += `<div class="message-bot"><i class="fas fa-robot mr-2"></i> Sorry, having trouble. Contact +255796323348 on WhatsApp.</div>`; }
-        }
-        
-        chatSend.onclick = sendBotMessage;
-        chatInput.onkeypress = (e) => { if (e.key === 'Enter') sendBotMessage(); };
-        
-        // Voice recording
-        let mediaRecorder, audioChunks;
-        document.getElementById('voiceRecordBtn').onclick = async () => {
-            if (mediaRecorder && mediaRecorder.state === 'recording') { mediaRecorder.stop(); document.getElementById('voiceRecordBtn').innerHTML = '<i class="fas fa-microphone"></i>'; return; }
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaRecorder = new MediaRecorder(stream);
-            audioChunks = [];
-            mediaRecorder.ondataavailable = (event) => { audioChunks.push(event.data); };
-            mediaRecorder.onstop = async () => { const audioBlob = new Blob(audioChunks, { type: 'audio/webm' }); chatMessages.innerHTML += `<div class="message-user"><i class="fas fa-microphone mr-2"></i> Voice message sent</div>`; stream.getTracks().forEach(track => track.stop()); };
-            mediaRecorder.start(); document.getElementById('voiceRecordBtn').innerHTML = '<i class="fas fa-stop text-red-400"></i>';
-        };
-        
         function escapeHtml(str) { return str.replace(/[&<>]/g, function(m) { if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; return m; }); }
-        
         function contactBusiness(companyId) { window.open('https://wa.me/255796323348?text=I%27m%20interested%20in%20your%20ad', '_blank'); }
         function contactProvider(providerId) { window.open('https://wa.me/255796323348?text=I%20need%20help%20with%20my%20delivery', '_blank'); }
         function contactSeller(sellerId) { window.open('https://wa.me/255796323348?text=I%20have%20a%20question%20about%20my%20order', '_blank'); }
         function trackOrderNumber(orderNumber) { document.getElementById('trackOrderNumber').value = orderNumber; showSection('tracking'); trackOrder(); }
         async function deleteAd(adId) { if (confirm('Delete this ad?')) { await fetch(`/api/ads/${adId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }); loadDashboardData(); loadAds(); } }
         
-        // Socket events
         socket.on('order-update', (data) => { console.log('Order update:', data); if (document.getElementById('trackOrderNumber')?.value === data.orderNumber) trackOrder(); if (currentUser) loadOrders(); showNotification('Order Update', `Order ${data.orderNumber} status: ${data.status}`, 'info'); });
         socket.on('location-update', (data) => { if (marker) marker.setLatLng([data.lat, data.lng]); });
+        socket.on('new-notification', (data) => { showNotification(data.title, data.body, 'info'); if (currentUser) loadNotifications(); });
         
-        // Initial load
-        const token = localStorage.getItem('token');
-        if (token) { fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } }).then(res => res.json()).then(user => { currentUser = user; updateUIForUser(); }).catch(() => localStorage.removeItem('token')); }
+        const token = localStorage.getItem('token'); if (token) { fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } }).then(res => res.json()).then(user => { currentUser = user; updateUIForUser(); loadReferralData(); }).catch(() => localStorage.removeItem('token')); }
         loadAds(); updateLanguage();
     </script>
 </body>
