@@ -973,3 +973,137 @@ async function sendWhatsAppMessage(phoneNumber, message) {
         return false;
     }
 }
+
+// ============ FREE TIER & PAYMENT ROUTES ============
+
+// Check free tier status
+app.get('/api/check-free-tier', authMiddleware, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        const now = new Date();
+        
+        // Check if user already has active free tier
+        if (user.freeTierExpiry && user.freeTierExpiry > now) {
+            return res.json({ 
+                hasFreeTier: true, 
+                expiresAt: user.freeTierExpiry,
+                message: "You have an active free tier!"
+            });
+        }
+        
+        // If user never had free tier, give them 30 days
+        if (!user.freeTierUsed) {
+            user.freeTierUsed = true;
+            user.freeTierExpiry = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+            await user.save();
+            
+            return res.json({ 
+                hasFreeTier: true, 
+                expiresAt: user.freeTierExpiry,
+                message: "Welcome! You've received 1 month free tier!"
+            });
+        }
+        
+        res.json({ hasFreeTier: false, message: "Free tier expired. Please make a payment." });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// Upload payment screenshot
+const paymentUpload = multer({ storage: storage });
+app.post('/api/payments/upload-screenshot', authMiddleware, paymentUpload.single('screenshot'), async (req, res) => {
+    try {
+        const { amount, phoneNumber, transactionId } = req.body;
+        const screenshotUrl = req.file ? req.file.path : null;
+        
+        const payment = new Payment({
+            orderId: null,
+            amount: amount || 0,
+            currency: 'TZS',
+            method: 'bank_transfer',
+            transactionId: transactionId || 'PENDING_' + Date.now(),
+            status: 'pending',
+            senderAccount: phoneNumber,
+            receiverAccount: process.env.NMB_ACCOUNT || '5161480052318274',
+            senderName: req.user.fullName,
+            receiverName: 'City Tech Holdings'
+        });
+        
+        await payment.save();
+        
+        // You can add WhatsApp notification here
+        console.log(`📱 Payment uploaded by ${req.user.fullName}: ${amount} TZS`);
+        
+        res.json({ 
+            success: true, 
+            paymentId: payment._id,
+            message: "Payment screenshot uploaded! Our team will verify within 24 hours."
+        });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// Get payment status
+app.get('/api/payments/status', authMiddleware, async (req, res) => {
+    try {
+        const payments = await Payment.find({ senderName: req.user.fullName }).sort({ createdAt: -1 });
+        const user = await User.findById(req.user.id);
+        
+        res.json({
+            payments: payments.map(p => ({
+                amount: p.amount,
+                status: p.status,
+                createdAt: p.createdAt
+            })),
+            isPremium: user.isPremium || false,
+            premiumExpiry: user.premiumExpiry
+        });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// Submit rating for company
+app.post('/api/ratings/company', authMiddleware, async (req, res) => {
+    try {
+        const { companyId, orderId, rating, comment, deliveryOnTime, qualityMatched, communication } = req.body;
+        
+        const ratingRecord = new CompanyRating({
+            companyId,
+            reviewerId: req.user.id,
+            orderId: orderId || 'test_order_' + Date.now(),
+            rating: rating,
+            comment: comment || '',
+            deliveryOnTime: deliveryOnTime || true,
+            qualityMatched: qualityMatched || true,
+            communication: communication || rating
+        });
+        await ratingRecord.save();
+        
+        // Update company's average rating
+        const avgRating = await CompanyRating.aggregate([
+            { $match: { companyId: companyId } },
+            { $group: { _id: null, avg: { $avg: '$rating' } } }
+        ]);
+        
+        await User.findByIdAndUpdate(companyId, { rating: avgRating[0]?.avg || rating });
+        
+        res.json({ success: true, message: "Rating submitted successfully!" });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// Get ratings for a company
+app.get('/api/ratings/company/:companyId', async (req, res) => {
+    try {
+        const ratings = await CompanyRating.find({ companyId: req.params.companyId })
+            .populate('reviewerId', 'fullName')
+            .sort({ createdAt: -1 });
+        res.json(ratings);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
