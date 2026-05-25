@@ -495,24 +495,69 @@
     </div>
 
     <!-- Chat Bot -->
-    <button id="chatToggle" class="fixed bottom-6 right-6 bg-gradient-to-r from-cyan-500 to-purple-600 w-14 h-14 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition z-50"><i class="fas fa-robot text-white text-2xl"></i></button>
-    <div id="chatBot" class="chat-bot">
-        <div class="bg-gradient-to-r from-cyan-600 to-purple-600 p-4 rounded-t-2xl flex justify-between items-center">
-            <span><i class="fas fa-robot mr-2"></i> <span data-key="bot_title">AI Business Assistant</span></span>
-            <div class="flex gap-2">
-                <button id="chatMinimize" class="text-white/80 hover:text-white"><i class="fas fa-minus"></i></button>
-                <button id="chatClose" class="text-white/80 hover:text-white"><i class="fas fa-times"></i></button>
-            </div>
-        </div>
-        <div id="chatMessages" class="chat-messages">
-            <div class="message-bot"><i class="fas fa-robot mr-2"></i> Hello! I'm City Find AI Assistant. How can I help you today?<br><span class="text-xs text-cyan-300">Ask about ads, orders, payments, or tracking!</span></div>
-        </div>
-        <div class="p-3 border-t border-gray-700 flex gap-2 bg-black/30">
-            <button id="voiceRecordBtn" class="bg-purple-600 w-10 h-10 rounded-full hover:bg-purple-700 transition"><i class="fas fa-microphone"></i></button>
-            <input type="text" id="chatInput" placeholder="Type your message..." class="flex-1 bg-white/10 rounded-full px-4 py-2 outline-none focus:border-cyan-400 border border-transparent focus:border-cyan-400">
-            <button id="chatSend" class="bg-cyan-500 w-10 h-10 rounded-full hover:bg-cyan-600 transition"><i class="fas fa-paper-plane"></i></button>
+<!-- Chat Bot -->
+<button id="chatToggle" class="fixed bottom-6 right-6 bg-gradient-to-r from-cyan-500 to-purple-600 w-14 h-14 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition z-50">
+    <i class="fas fa-robot text-white text-2xl"></i>
+</button>
+
+<div id="chatBot" class="chat-bot" style="display: none;">
+    <div class="bg-gradient-to-r from-cyan-600 to-purple-600 p-4 rounded-t-2xl flex justify-between items-center">
+        <span><i class="fas fa-robot mr-2"></i> <span data-key="bot_title">AI Business Assistant</span></span>
+        <div class="flex gap-2">
+            <button id="voiceCallBtn" class="text-white/80 hover:text-white transition" title="Voice Call">
+                <i class="fas fa-phone-alt"></i>
+            </button>
+            <button id="screenShareBtn" class="text-white/80 hover:text-white transition" title="Share Screen">
+                <i class="fas fa-desktop"></i>
+            </button>
+            <button id="chatMinimize" class="text-white/80 hover:text-white">
+                <i class="fas fa-minus"></i>
+            </button>
+            <button id="chatClose" class="text-white/80 hover:text-white">
+                <i class="fas fa-times"></i>
+            </button>
         </div>
     </div>
+    <div id="chatMessages" class="chat-messages">
+        <div class="message-bot">
+            <i class="fas fa-robot mr-2"></i> Hello! I'm City Find AI Assistant. How can I help you today?<br>
+            <span class="text-xs text-cyan-300">Ask about ads, orders, payments, or tracking! Click the mic to speak 🎤</span>
+        </div>
+    </div>
+    <div class="p-3 border-t border-gray-700 flex gap-2 bg-black/30">
+        <button id="voiceRecordBtn" class="bg-purple-600 w-10 h-10 rounded-full hover:bg-purple-700 transition" title="Voice Message">
+            <i class="fas fa-microphone"></i>
+        </button>
+        <button id="speechToTextBtn" class="bg-green-600 w-10 h-10 rounded-full hover:bg-green-700 transition" title="Speech to Text">
+            <i class="fas fa-microphone-alt"></i>
+        </button>
+        <input type="text" id="chatInput" placeholder="Type your message..." class="flex-1 bg-white/10 rounded-full px-4 py-2 outline-none focus:border-cyan-400 border border-transparent focus:border-cyan-400">
+        <button id="chatSend" class="bg-cyan-500 w-10 h-10 rounded-full hover:bg-cyan-600 transition">
+            <i class="fas fa-paper-plane"></i>
+        </button>
+    </div>
+    <div class="p-2 border-t border-gray-700 text-center text-xs text-gray-500">
+        <span id="voiceStatus"></span>
+    </div>
+</div>
+
+<!-- Screen Share Modal -->
+<div id="screenShareModal" class="fixed inset-0 bg-black/90 z-[2100] hidden items-center justify-center">
+    <div class="bg-gray-900 rounded-2xl p-4 max-w-4xl w-full mx-4">
+        <div class="flex justify-between items-center mb-3">
+            <h3 class="text-lg font-bold"><i class="fas fa-desktop text-cyan-400 mr-2"></i> Screen Sharing</h3>
+            <button onclick="stopScreenShare()" class="text-gray-400 hover:text-white">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <video id="screenVideo" autoplay playsinline class="w-full rounded-lg bg-black"></video>
+        <div class="flex justify-center gap-4 mt-4">
+            <button id="stopScreenShareBtn" class="bg-red-600 px-6 py-2 rounded-full hover:bg-red-700">
+                <i class="fas fa-stop"></i> Stop Sharing
+            </button>
+        </div>
+    </div>
+</div>
 
     <!-- Auth Modal -->
     <div id="authModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 hidden">
