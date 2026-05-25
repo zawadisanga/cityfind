@@ -667,6 +667,7 @@ app.get('/api/receiver/stats', authMiddleware, async (req, res) => {
 });
 
 // ============ AI BOT ROUTE - CLEAN VERSION ============
+// ============ AI BOT ROUTE - IMPROVED ============
 app.post('/api/bot/chat', async (req, res) => {
     try {
         const { message, language } = req.body;
@@ -674,25 +675,37 @@ app.post('/api/bot/chat', async (req, res) => {
         const lowerMsg = (message || '').toLowerCase();
         let reply = '';
         
-        if (lowerMsg.includes('bei') || lowerMsg.includes('price') || lowerMsg.includes('gharama')) {
+        // Check for price questions
+        if (lowerMsg.includes('bei') || lowerMsg.includes('price') || lowerMsg.includes('gharama') || lowerMsg.includes('cost') || lowerMsg.includes('kiasi gani')) {
             reply = "💰 **Bei za Matangazo:**\n• Banner: $100 kwa mwezi\n• Featured: $500 kwa mwezi\n• Sponsored: $1,000 kwa mwezi\n\nKwa maelezo zaidi, WhatsApp: +255796323348";
         }
-        else if (lowerMsg.includes('payment') || lowerMsg.includes('malipo') || lowerMsg.includes('bank')) {
-            reply = "🏦 **Maelezo ya Malipo:**\nBenki: NMB Bank\nJina: City Tech Holdings\nNamba: 5161480052318274\nSWIFT: NMBCTZTZ";
+        // Check for payment questions
+        else if (lowerMsg.includes('lipa') || lowerMsg.includes('payment') || lowerMsg.includes('malipo') || lowerMsg.includes('bank') || lowerMsg.includes('nmb') || lowerMsg.includes('pesa')) {
+            reply = "🏦 **Maelezo ya Malipo:**\n\nBenki: NMB Bank\nJina la Akaunti: City Tech Holdings\nNamba ya Akaunti: 5161480052318274\nSWIFT Code: NMBCTZTZ\n\n💵 **Njia za Malipo:**\n• Direct Bank Transfer (NMB)\n• Mobile Money (M-Pesa, Tigo Pesa, Airtel Money)\n• Cash on Delivery\n\nBaada ya malipo, tuna proof yako kwa WhatsApp: +255796323348";
         }
-        else if (lowerMsg.includes('contact') || lowerMsg.includes('wasiliana') || lowerMsg.includes('simu')) {
-            reply = "📞 **Mawasiliano:**\nWhatsApp: +255796323348\nEmail: citytechuk@gmail.com";
+        // Check for contact questions
+        else if (lowerMsg.includes('simu') || lowerMsg.includes('phone') || lowerMsg.includes('contact') || lowerMsg.includes('wasiliana') || lowerMsg.includes('namba')) {
+            reply = "📞 **Mawasiliano Yetu:**\n\nWhatsApp/Simu: +255796323348\nBarua Pepe: citytechuk@gmail.com\n\nTunapatikana 24/7 kwa maswali yako yote!";
         }
-        else if (lowerMsg.includes('track') || lowerMsg.includes('fuatilia')) {
-            reply = "📦 **Kufuatilia Order:**\nNenda kwenye sehemu ya 'Track' kwenye website yetu na ingiza namba yako ya order.";
+        // Check for tracking questions
+        else if (lowerMsg.includes('track') || lowerMsg.includes('fuatilia') || lowerMsg.includes('order') || lowerMsg.includes('agizo')) {
+            reply = "📦 **Kufuatilia Order Yako:**\n\nNenda kwenye sehemu ya 'Track' kwenye website yetu na ingiza namba yako ya order (inaanza na ORD).\n\nAu tuma namba yako ya order hapa nikusaidie kufuatilia!";
         }
+        // Check for quality check questions
+        else if (lowerMsg.includes('quality') || lowerMsg.includes('ubora') || lowerMsg.includes('check') || lowerMsg.includes('kagua')) {
+            reply = "✅ **Quality Check Process:**\n\n1. Pokea bidhaa yako\n2. Rekodi video fupi (sekunde 10-20) ikionyesha bidhaa\n3. Piga picha 2-3 za bidhaa\n4. Tembelea sehemu ya 'Quality Check' kwenye website yako\n5. Pakia video na picha\n\nKama bidhaa hailingani na maelezo, utalipwa pesa yako tena ndani ya siku 3!";
+        }
+        // Default greeting
         else {
-            reply = "👋 Hello! I'm City Find AI Assistant.\n\nI can help you with:\n• 💰 Advertising prices\n• 📦 Tracking deliveries\n• 💳 Payments (NMB Bank)\n• ✅ Quality checks\n\n📞 WhatsApp: +255796323348\n📧 Email: citytechuk@gmail.com\n\nWhat would you like to know?";
+            reply = "👋 Hello! I'm City Find AI Assistant.\n\nI can help you with:\n• 💰 **Bei za Matangazo** - Banner $100, Featured $500, Sponsored $1000\n• 📦 **Kufuatilia delivery** - Tuma order number yako\n• 💳 **Malipo** - NMB Bank: 5161480052318274\n• ✅ **Quality check** - Ukaguzi wa bidhaa kwa video\n\n📞 WhatsApp: +255796323348\n📧 Email: citytechuk@gmail.com\n\nNiulize swali lolote kuhusu huduma zetu!";
         }
         
         res.json({ reply: reply });
     } catch (error) {
-        res.json({ reply: "Please contact us on WhatsApp: +255796323348 for assistance." });
+        console.error('Bot Error:', error.message);
+        res.json({ 
+            reply: "Samahani, kuna tatizo. Tafadhali wasiliana nasi kwenye WhatsApp: +255796323348 kwa msaada wa haraka."
+        });
     }
 });
 // ============ SERVE HTML FILES ============
