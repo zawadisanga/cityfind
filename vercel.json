@@ -1,0 +1,20 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "server.js", "use": "@vercel/node" },
+    { "src": "public/**", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "server.js" },
+    { "src": "/socket.io/(.*)", "dest": "server.js" },
+    { "src": "/(.*)", "dest": "public/index.html" }
+  ],
+  "env": {
+    "MONGODB_URI": "@cityfind_mongodb_uri",
+    "JWT_SECRET": "@cityfind_jwt_secret",
+    "GOOGLE_AI_API_KEY": "AIzaSyAgzX8szyUGq2TxCoUgAJx7U-z4FSgiLP8",
+    "NMB_ACCOUNT": "5161480052318274",
+    "ADMIN_EMAIL": "citytechuk@gmail.com",
+    "ADMIN_PHONE": "+255796323348"
+  }
+}
